@@ -28,23 +28,49 @@ check_and_install_dependencies() {
     elif command -v brew &> /dev/null; then
         PACKAGE_MANAGER="brew"
     else
-        echo "No supported package manager found. Please install required dependencies manually."
+        log_install "No supported package manager found. Please install required dependencies manually."
         exit 1
     fi
 
     check_sudo
 
-    echo "Checking and installing missing dependencies..."
+    log_install "Checking and installing missing dependencies..."
     for dep in "${dependencies[@]}"; do
         if ! command -v "$dep" &> /dev/null; then
-            echo "Installing $dep..."
+            log_install "Installing $dep..."
             if [ "$PACKAGE_MANAGER" = "apt-get" ]; then
                 $SUDO apt-get update && $SUDO apt-get install -y "$dep"
             elif [ "$PACKAGE_MANAGER" = "brew" ]; then
                 brew install "$dep"
             fi
         else
-            echo "$dep is already installed."
+            log_install "$dep is already installed."
         fi
+    done
+}
+
+create_symlinks() {
+    local items=("$@")
+    for item in "${items[@]}"; do
+        IFS=':' read -r source target <<<"$item"
+        if [ -L "$target" ]; then
+            log_symlink "Removing existing symlink $target"
+            unlink "$target"
+        elif [ -d "$target" ]; then
+            log_symlink "Warning: $target is a directory. Skipping..."
+            continue
+        elif [ -e "$target" ]; then
+            log_symlink "Warning: $target already exists. Skipping..."
+            continue
+        fi
+        ln -s "$DOTFILES_DIR/$source" "$target" || error_exit "Error creating symlink $target"
+        log_symlink "Created symlink for $source"
+    done
+}
+
+create_directories() {
+    local directories=("$@")
+    for dir in "${directories[@]}"; do
+        mkdir -p "$dir" || error_exit "Error creating directory $dir"
     done
 }
