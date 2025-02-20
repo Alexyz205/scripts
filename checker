@@ -1,0 +1,17 @@
+#!/bin/bash
+
+check_architecture() {
+    ARCH=$(uname -m)
+    if [ "$ARCH" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+    fi
+}
+
+check_sudo() {
+    if command -v sudo &> /dev/null; then
+        SUDO="sudo"
+    else
+        SUDO=""
+    fi
+}

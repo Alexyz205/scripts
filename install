@@ -1,0 +1,62 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+source "$SCRIPT_DIR/logs"
+source "$SCRIPT_DIR/utils"
+source "$SCRIPT_DIR/checker"
+
+check_architecture
+check_sudo
+
+check_dependency "curl"
+check_dependency "tar"
+check_dependency "git"
+
+# Define versions.
+STARSHIP_VERSION="1.22.1"
+ZOXIDE_VERSION="0.9.7"
+FZF_VERSION="0.60.0"
+RG_VERSION="14.1.0"
+FD_VERSION="10.2.0"
+LAZYGIT_VERSION="0.45.2"
+NVIM_VERSION="0.10.4"
+DIRENV_VERSION="2.35.0"
+EZA_VERSION="0.20.21"
+RANGER_VERSION="1.9.4"
+
+# Set ripgrep platform based on architecture.
+if [ "$ARCH" = "aarch64" ]; then
+  RG_PLATFORM="${ARCH}-unknown-linux-gnu"
+else
+  RG_PLATFORM="${ARCH}-unknown-linux-musl"
+fi
+
+# Set lazygit platform based on architecture.
+if [ "$ARCH" = "aarch64" ]; then
+  LAZYGIT_PLATFORM="Linux_arm64"
+else
+  LAZYGIT_PLATFORM="Linux_x86_64"
+fi
+
+# Set direnv platform based on architecture.
+if [ "$ARCH" = "aarch64" ]; then
+  DIRENV_PLATFORM="linux-arm64"
+else
+  DIRENV_PLATFORM="linux-amd64"
+fi
+
+# Installations
+log_install "Starting installation"
+install_command "starship" "curl -k -sS https://starship.rs/install.sh | $SUDO sh -s -- --yes --version v${STARSHIP_VERSION}" "starship"
+install_command "zoxide" "curl -k -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/v${ZOXIDE_VERSION}/install.sh | sh" "zoxide"
+# install_command "fzf" "git clone --branch v${FZF_VERSION} --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all" "fzf"
+install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && tar -xzf \"ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && \$SUDO install \"ripgrep-${RG_VERSION}-${RG_PLATFORM}/rg\" -D -t /usr/local/bin/ && rm -rf \"ripgrep-${RG_VERSION}-${RG_PLATFORM}\" \"ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\"" "rg"
+install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz\" && tar -xzf fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz && $SUDO install fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl/fd -D -t /usr/local/bin/ && rm -rf fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz" "fd"
+install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && tar -xzf lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz && \$SUDO install lazygit -D -t /usr/local/bin/ && rm -rf lazygit lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz" "lazygit"
+install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.${DIRENV_PLATFORM}\" && chmod +x direnv.${DIRENV_PLATFORM} && $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv"
+install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-unknown-linux-gnu.tar.gz\" && tar -xzf eza_${ARCH}-unknown-linux-gnu.tar.gz && $SUDO install eza -D -t /usr/local/bin/ && rm -rf eza eza_${ARCH}-unknown-linux-gnu.tar.gz" "eza"
+install_command "nvim" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.0.0/nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz" "nvim"
+check_and_install_dependencies ranger
+
+log_install "Installation completed"

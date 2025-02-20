@@ -1,0 +1,75 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+source "$SCRIPT_DIR/logs"
+source "$SCRIPT_DIR/utils"
+source "$SCRIPT_DIR/checker"
+
+LOG_FILE="install_k8s-$(date +%F).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+# Help option
+if [[ "$1" == "--help" ]]; then
+    echo "Usage: install_k8s.sh [--help]"
+    echo "This script installs kubectl and k9s, and sets the Catppuccin theme for k9s."
+    exit 0
+fi
+
+check_dependency curl
+check_dependency tar
+
+check_architecture
+check_sudo
+
+# Define versions.
+KUBECTL_VERSION="1.32.2"
+K9S_VERSION="0.40.5"
+
+# Set kubectl platform based on architecture.
+if [ "$ARCH" = "aarch64" ]; then
+  KUBECTL_PLATFORM="arm64"
+else
+  KUBECTL_PLATFORM="amd64"
+fi
+
+# Set k9s platform based on architecture.
+if [ "$ARCH" = "aarch64" ]; then
+  K9S_PLATFORM="Linux_arm64"
+else
+  K9S_PLATFORM="Linux_amd64"
+fi
+
+# Installations
+install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${KUBECTL_PLATFORM}/kubectl\" && chmod +x kubectl && $SUDO mv kubectl /usr/local/bin/" "kubectl"
+install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_${K9S_PLATFORM}.tar.gz\" && tar -xzf k9s_${K9S_PLATFORM}.tar.gz && $SUDO mv k9s /usr/local/bin/ && rm -rf k9s_${K9S_PLATFORM}.tar.gz" "k9s"
+
+# Fetch and set the Catppuccin theme for k9s
+THEME_URL="https://github.com/catppuccin/k9s/raw/main/dist/catppuccin-mocha-transparent.yaml"
+THEME_DIR="$HOME/.config/k9s/skins"
+THEME_FILE="$THEME_DIR/catppuccin-mocha-transparent.yaml"
+
+log "Fetching Catppuccin theme for k9s."
+mkdir -p "$THEME_DIR"
+curl -Lo "$THEME_FILE" "$THEME_URL" || error_exit "Failed to fetch Catppuccin theme."
+
+# Configure k9s to use the theme
+CONFIG_FILE="$HOME/.config/k9s/config.yaml"
+log "Configuring k9s to use the Catppuccin theme."
+mkdir -p "$(dirname "$CONFIG_FILE")"
+if grep -q "ui:" "$CONFIG_FILE"; then
+    sed -i '/ui:/a \ \ \ \ skin: catppuccin-mocha-transparent' "$CONFIG_FILE"
+else
+    echo -e "\nk9s:\n  ui:\n    skin: catppuccin-mocha-transparent" >> "$CONFIG_FILE"
+fi
+
+log "Catppuccin theme for k9s set successfully."
+
+# Remove log file if successful
+if [ $? -eq 0 ]; then
+    rm "$LOG_FILE"
+else
+    log_error "Script did not complete successfully; log file not removed."
+fi
+
+exit 0

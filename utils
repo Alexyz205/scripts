@@ -1,0 +1,50 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+source "$SCRIPT_DIR/logs"
+source "$SCRIPT_DIR/checker"
+
+check_dependency() {
+    command -v "$1" &> /dev/null || { echo "Error: $1 is required but not installed."; exit 1; }
+}
+
+install_command() {
+    local name=$1
+    local install_cmd=$2
+    local check_cmd=$3
+    log_install "Installing $name."
+    if ! command -v $check_cmd &> /dev/null; then
+        eval $install_cmd || error_exit "Failed to install $name."
+        log_install "$name installed successfully."
+    else
+        log_install "$name is already installed."
+    fi
+}
+
+check_and_install_dependencies() {
+    local dependencies=("$@")
+    if command -v apt-get &> /dev/null; then
+        PACKAGE_MANAGER="apt-get"
+    elif command -v brew &> /dev/null; then
+        PACKAGE_MANAGER="brew"
+    else
+        echo "No supported package manager found. Please install required dependencies manually."
+        exit 1
+    fi
+
+    check_sudo
+
+    echo "Checking and installing missing dependencies..."
+    for dep in "${dependencies[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            echo "Installing $dep..."
+            if [ "$PACKAGE_MANAGER" = "apt-get" ]; then
+                $SUDO apt-get update && $SUDO apt-get install -y "$dep"
+            elif [ "$PACKAGE_MANAGER" = "brew" ]; then
+                brew install "$dep"
+            fi
+        else
+            echo "$dep is already installed."
+        fi
+    done
+}
