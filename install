@@ -23,7 +23,6 @@ LAZYGIT_VERSION="0.45.2"
 NVIM_VERSION="0.10.4"
 DIRENV_VERSION="2.35.0"
 EZA_VERSION="0.20.21"
-RANGER_VERSION="1.9.4"
 
 # Set ripgrep platform based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
@@ -57,6 +56,5 @@ install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygi
 install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.${DIRENV_PLATFORM}\" && chmod +x direnv.${DIRENV_PLATFORM} && $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv"
 install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-unknown-linux-gnu.tar.gz\" && tar -xzf eza_${ARCH}-unknown-linux-gnu.tar.gz && $SUDO install eza -D -t /usr/local/bin/ && rm -rf eza eza_${ARCH}-unknown-linux-gnu.tar.gz" "eza"
 install_command "nvim" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.0.0/nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz" "nvim"
-check_and_install_dependencies ranger
 
 log_install "Installation completed"
