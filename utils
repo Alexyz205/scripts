@@ -53,18 +53,16 @@ create_symlinks() {
     local items=("$@")
     for item in "${items[@]}"; do
         IFS=':' read -r source target <<<"$item"
-        if [ -L "$target" ]; then
-            log_symlink "Removing existing symlink $target"
-            unlink "$target"
-        elif [ -d "$target" ]; then
-            log_symlink "Warning: $target is a directory. Skipping..."
-            continue
-        elif [ -e "$target" ]; then
-            log_symlink "Warning: $target already exists. Skipping..."
-            continue
+
+        # Check if target exists (file, symlink, or directory) and remove it
+        if [ -e "$target" ] || [ -L "$target" ]; then
+            log_symlink "Removing existing file/directory/symlink: $target"
+            rm -rf "$target"
         fi
+
+        # Create the new symlink
         ln -s "$DOTFILES_DIR/$source" "$target" || error_exit "Error creating symlink $target"
-        log_symlink "Created symlink for $source"
+        log_symlink "Created symlink for $source -> $target"
     done
 }
 
