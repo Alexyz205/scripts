@@ -21,6 +21,7 @@ common_items=(
   "shell/zsh:$XDG_CONFIG_HOME/zsh"
   "shell/zsh/.zprofile:$HOME/.zprofile"
   "shell/zsh/.zshrc:$HOME/.zshrc"
+  "shell/bash/.bashrc:$HOME/.bashrc"
 )
 
 create_directories "${common_directories[@]}"
