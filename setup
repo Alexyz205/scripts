@@ -6,9 +6,24 @@ source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/utils"
 
 export XDG_CONFIG_HOME="$HOME/.config"
-mkdir -p "$XDG_CONFIG_HOME"
-log_setup "Creating symlinks for configurations."
-ln -sf "$PWD/nvim" "$XDG_CONFIG_HOME/nvim"
-ln -sf "$PWD/starship.toml" "$XDG_CONFIG_HOME/starship.toml"
-ln -sf "$PWD/.bashrc" "$HOME/.bashrc"
+
+common_directories=(
+    $XDG_CONFIG_HOME
+)
+
+common_items=(
+  "ghostty:$XDG_CONFIG_HOME/ghostty"
+  "nix:$XDG_CONFIG_HOME/nix"
+  "tmux/.tmux.conf:$HOME/.tmux.conf"
+  "tmux/.tmux:$HOME/.tmux"
+  "nvim:$XDG_CONFIG_HOME/nvim"
+  "starship.toml:$XDG_CONFIG_HOME/starship.toml"
+  "shell/zsh:$XDG_CONFIG_HOME/zsh"
+  "shell/zsh/.zprofile:$HOME/.zprofile"
+  "shell/zsh/.zshrc:$HOME/.zshrc"
+)
+
+create_directories "${common_directories[@]}"
+create_symlinks "${common_items[@]}"
+
 log_setup "Setup completed"
