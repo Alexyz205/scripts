@@ -25,31 +25,16 @@ DIRENV_VERSION="2.35.0"
 EZA_VERSION="0.20.21"
 NODE_VERSION="22.14.0"
 
-# Set ripgrep platform based on architecture.
+# Set platforms based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
   RG_PLATFORM="${ARCH}-unknown-linux-gnu"
-else
-  RG_PLATFORM="${ARCH}-unknown-linux-musl"
-fi
-
-# Set lazygit platform based on architecture.
-if [ "$ARCH" = "aarch64" ]; then
   LAZYGIT_PLATFORM="Linux_arm64"
-else
-  LAZYGIT_PLATFORM="Linux_x86_64"
-fi
-
-# Set direnv platform based on architecture.
-if [ "$ARCH" = "aarch64" ]; then
   DIRENV_PLATFORM="linux-arm64"
-else
-  DIRENV_PLATFORM="linux-amd64"
-fi
-
-# Set node platform based on architecture.
-if [ "$ARCH" = "aarch64" ]; then
   NODE_PLATFORM="linux-arm64"
 else
+  RG_PLATFORM="${ARCH}-unknown-linux-musl"
+  LAZYGIT_PLATFORM="Linux_x86_64"
+  DIRENV_PLATFORM="linux-amd64"
   NODE_PLATFORM="linux-x64"
 fi
 
