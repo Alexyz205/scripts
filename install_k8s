@@ -26,18 +26,22 @@ check_sudo
 KUBECTL_VERSION="1.32.2"
 K9S_VERSION="0.40.5"
 HELM_VERSION="3.17.1"
+HELMFILE_VERSION="0.171.0"
 
 # Set platform based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
   PLATFORM="arm64"
+  HELMFILE_PLATFORM="arm64"
 else
   PLATFORM="amd64"
+  HELMFILE_PLATFORM="386"
 fi
 
 # Installations
 install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${PLATFORM}/kubectl\" && chmod +x kubectl && $SUDO mv kubectl /usr/local/bin/" "kubectl"
 install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${PLATFORM}.tar.gz\" && tar -xzf k9s_Linux_${PLATFORM}.tar.gz && $SUDO mv k9s /usr/local/bin/ && rm -rf k9s_Linux_${PLATFORM}.tar.gz" "k9s"
 install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz\" && tar -xzf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz && $SUDO mv linux-${PLATFORM}/helm /usr/local/bin/ && rm -rf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz linux-${PLATFORM}" "helm"
+install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz\" && tar -xzf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz && $SUDO mv helmfile /usr/local/bin/ && rm -rf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz" "helmfile"
 
 # Fetch and set the Catppuccin theme for k9s
 THEME_URL="https://github.com/catppuccin/k9s/raw/main/dist/catppuccin-mocha-transparent.yaml"
