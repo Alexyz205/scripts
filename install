@@ -15,6 +15,7 @@ check_dependency "git"
 
 # Define versions.
 STARSHIP_VERSION="1.22.1"
+TMUX_VERSION="3.5"
 ZOXIDE_VERSION="0.9.7"
 FZF_VERSION="0.60.0"
 RG_VERSION="14.1.0"
@@ -41,6 +42,7 @@ fi
 # Installations
 log_install "Starting installation"
 install_command "starship" "curl -k -sS https://starship.rs/install.sh | $SUDO sh -s -- --yes --version v${STARSHIP_VERSION}" "starship"
+install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux"
 install_command "zoxide" "curl -k -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/v${ZOXIDE_VERSION}/install.sh | sh" "zoxide"
 install_command "fzf" "git clone --branch v${FZF_VERSION} --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all" "fzf"
 install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && tar -xzf \"ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && \$SUDO install \"ripgrep-${RG_VERSION}-${RG_PLATFORM}/rg\" -D -t /usr/local/bin/ && rm -rf \"ripgrep-${RG_VERSION}-${RG_PLATFORM}\" \"ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\"" "rg"
@@ -48,7 +50,7 @@ install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/downl
 install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && tar -xzf lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz && \$SUDO install lazygit -D -t /usr/local/bin/ && rm -rf lazygit lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz" "lazygit"
 install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.${DIRENV_PLATFORM}\" && chmod +x direnv.${DIRENV_PLATFORM} && $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv"
 install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-unknown-linux-gnu.tar.gz\" && tar -xzf eza_${ARCH}-unknown-linux-gnu.tar.gz && $SUDO install eza -D -t /usr/local/bin/ && rm -rf eza eza_${ARCH}-unknown-linux-gnu.tar.gz" "eza"
-install_command "nvim" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.0.0/nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz" "nvim"
+install_command "nvim" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz" "nvim"
 install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz\" && tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/ && rm -rf node-v${NODE_VERSION}-${NODE_PLATFORM} node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz" "node"
 
 log_install "Installation completed"
