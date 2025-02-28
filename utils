@@ -12,8 +12,11 @@ install_command() {
     local name=$1
     local install_cmd=$2
     local check_cmd=$3
+    local check_path=$4
     log_install "Installing $name."
-    if ! command -v $check_cmd &> /dev/null; then
+    if [ -n "$check_path" ] && [ -x "$check_path" ]; then
+        log_install "$name is already installed at $check_path."
+    elif ! command -v $check_cmd &> /dev/null; then
         eval $install_cmd || error_exit "Failed to install $name."
         log_install "$name installed successfully."
     else
