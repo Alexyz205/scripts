@@ -40,7 +40,7 @@ fi
 # Installations
 install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${PLATFORM}/kubectl\" && chmod +x kubectl && $SUDO mv kubectl /usr/local/bin/" "kubectl"
 install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${PLATFORM}.tar.gz\" && $SUDO tar -xzf k9s_Linux_${PLATFORM}.tar.gz -C /usr/local/bin/ k9s && rm -rf k9s_Linux_${PLATFORM}.tar.gz" "k9s"
-install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz\" && $SUDO tar -xzf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz -C /usr/local/bin/ linux-${PLATFORM}/helm && rm -rf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz linux-${PLATFORM}" "helm"
+install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz\" && $SUDO tar -xzf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz -C /usr/local/bin/ helm && rm -rf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz linux-${PLATFORM}" "helm"
 install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz\" && $SUDO tar -xzf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz -C /usr/local/bin/ helmfile && rm -rf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz" "helmfile"
 
 # Fetch and set the Catppuccin theme for k9s
