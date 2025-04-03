@@ -1,17 +1,77 @@
 #!/bin/bash
+# System checker utilities
+# Provides functions for checking architecture, sudo access, and other system requirements
 
+# Check for supported system architecture
 check_architecture() {
     ARCH=$(uname -m)
     if [ "$ARCH" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then
-        echo "Unsupported architecture: $ARCH"
+        echo -e "${RED}${ERROR_ICON}[ERROR]${RESET} Unsupported architecture: ${BOLD}$ARCH${RESET}"
+        echo -e "${INFO_ICON} This script only supports x86_64 and aarch64 architectures."
         exit 1
+    fi
+
+    # Set the architecture variable for other scripts to use
+    export ARCH
+
+    # Optional architecture-specific message if log function is available
+    if type log &>/dev/null; then
+        log "Detected architecture: ${BOLD}$ARCH${RESET}"
     fi
 }
 
+# Check if sudo is available and set SUDO variable accordingly
 check_sudo() {
     if command -v sudo &> /dev/null; then
         SUDO="sudo"
+
+        # Optional sudo check message if log function is available
+        if type log_progress &>/dev/null; then
+            log_progress "Sudo is available and will be used for privileged operations"
+        fi
     else
         SUDO=""
+
+        # Optional warning if log function is available
+        if type log_warning &>/dev/null; then
+            log_warning "Sudo is not available. Running with current user privileges."
+            log_warning "Some operations may fail if they require elevated permissions."
+        fi
+    fi
+
+    # Export SUDO for use in other scripts
+    export SUDO
+}
+
+# Check for minimum system requirements
+check_system_requirements() {
+    # Check total memory (in MB)
+    local mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2 / 1024}' | cut -d. -f1)
+    local min_memory=1024 # 1GB minimum
+
+    if [ "$mem_total" -lt "$min_memory" ]; then
+        if type log_warning &>/dev/null; then
+            log_warning "System has only ${BOLD}${mem_total}MB${RESET} of RAM. Minimum recommended is ${BOLD}${min_memory}MB${RESET}."
+            log_warning "Installation may be slow or fail due to insufficient memory."
+        else
+            echo -e "Warning: System has only ${mem_total}MB of RAM. Minimum recommended is ${min_memory}MB."
+        fi
+    elif type log &>/dev/null; then
+        log "System memory check passed: ${BOLD}${mem_total}MB${RESET} available"
+    fi
+
+    # Check disk space in GB (available in current directory)
+    local disk_space=$(df -BG . | awk 'NR==2 {print $4}' | sed 's/G//')
+    local min_disk=5 # 5GB minimum
+
+    if [ "$disk_space" -lt "$min_disk" ]; then
+        if type log_warning &>/dev/null; then
+            log_warning "Only ${BOLD}${disk_space}GB${RESET} of disk space available. Minimum recommended is ${BOLD}${min_disk}GB${RESET}."
+            log_warning "Installation may fail due to insufficient disk space."
+        else
+            echo -e "Warning: Only ${disk_space}GB of disk space available. Minimum recommended is ${min_disk}GB."
+        fi
+    elif type log &>/dev/null; then
+        log "Disk space check passed: ${BOLD}${disk_space}GB${RESET} available"
     fi
 }

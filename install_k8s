@@ -11,14 +11,25 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 
 # Help option
 if [[ "$1" == "--help" ]]; then
+    section_header "Kubernetes Tools Installer"
     echo "Usage: install_k8s.sh [--help]"
-    echo "This script installs kubectl and k9s, and sets the Catppuccin theme for k9s."
+    echo "This script installs kubectl, k9s, helm, helmfile, and configures the Catppuccin theme for k9s."
+    echo
+    echo "Components that will be installed:"
+    echo " ${INFO_ICON} kubectl    - Kubernetes command-line tool"
+    echo " ${INFO_ICON} k9s        - Terminal UI for Kubernetes"
+    echo " ${INFO_ICON} helm       - Kubernetes package manager"
+    echo " ${INFO_ICON} helmfile   - Declarative spec for deploying helm charts"
+    echo " ${INFO_ICON} helm-diff  - Helm plugin for showing differences"
     exit 0
 fi
 
+section_header "Kubernetes Tools Installation"
+
+# Check prerequisites
+log_progress "Checking system prerequisites"
 check_dependency curl
 check_dependency tar
-
 check_architecture
 check_sudo
 
@@ -28,50 +39,82 @@ K9S_VERSION="0.40.5"
 HELM_VERSION="3.17.1"
 HELMFILE_VERSION="0.171.0"
 
+log "Using the following versions:"
+echo " ${INFO_ICON} kubectl:   ${BOLD}v${KUBECTL_VERSION}${RESET}"
+echo " ${INFO_ICON} k9s:       ${BOLD}v${K9S_VERSION}${RESET}"
+echo " ${INFO_ICON} helm:      ${BOLD}v${HELM_VERSION}${RESET}"
+echo " ${INFO_ICON} helmfile:  ${BOLD}v${HELMFILE_VERSION}${RESET}"
+
 # Set platform based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
   PLATFORM="arm64"
   HELMFILE_PLATFORM="arm64"
+  log "Detected ARM64 architecture"
 else
   PLATFORM="amd64"
   HELMFILE_PLATFORM="386"
+  log "Detected AMD64 architecture"
 fi
 
 # Installations
+section_header "Installing Command-Line Tools"
+
+log_progress "Installing kubectl..."
 install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${PLATFORM}/kubectl\" && chmod +x kubectl && \$SUDO install -D kubectl /usr/local/bin/kubectl" "kubectl"
+
+log_progress "Installing k9s..."
 install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${PLATFORM}.tar.gz\" && $SUDO tar -xzf k9s_Linux_${PLATFORM}.tar.gz -C /usr/local/bin/ k9s && rm -rf k9s_Linux_${PLATFORM}.tar.gz" "k9s"
+
+log_progress "Installing helm..."
 install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz\" && $SUDO tar -xzf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz --strip-components=1 -C /usr/local/bin/ linux-${PLATFORM}/helm && rm -rf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz" "helm"
+
+log_progress "Installing helmfile..."
 install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz\" && $SUDO tar -xzf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz -C /usr/local/bin/ helmfile && rm -rf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz" "helmfile"
 
 # Install Helm diff plugin
+log_progress "Installing Helm plugins..."
 install_command "helm-diff" "helm plugin install https://github.com/databus23/helm-diff" "helm plugin list | grep -q diff"
+
+section_header "Configuring K9s Theme"
 
 # Fetch and set the Catppuccin theme for k9s
 THEME_URL="https://github.com/catppuccin/k9s/raw/main/dist/catppuccin-mocha-transparent.yaml"
 THEME_DIR="$HOME/.config/k9s/skins"
 THEME_FILE="$THEME_DIR/catppuccin-mocha-transparent.yaml"
 
-log "Fetching Catppuccin theme for k9s."
+log_progress "Fetching Catppuccin theme for k9s"
 mkdir -p "$THEME_DIR"
 curl -Lo "$THEME_FILE" "$THEME_URL" || error_exit "Failed to fetch Catppuccin theme."
+log_success "Downloaded theme to $THEME_FILE"
 
 # Configure k9s to use the theme
 CONFIG_FILE="$HOME/.config/k9s/config.yaml"
-log "Configuring k9s to use the Catppuccin theme."
+log_progress "Configuring k9s to use the Catppuccin theme"
 mkdir -p "$(dirname "$CONFIG_FILE")"
-if grep -q "ui:" "$CONFIG_FILE"; then
+if grep -q "ui:" "$CONFIG_FILE" 2>/dev/null; then
     sed -i '/ui:/a \ \ \ \ skin: catppuccin-mocha-transparent' "$CONFIG_FILE"
 else
     echo -e "\nk9s:\n  ui:\n    skin: catppuccin-mocha-transparent" >> "$CONFIG_FILE"
 fi
 
-log "Catppuccin theme for k9s set successfully."
+log_success "Catppuccin theme for k9s set successfully"
+
+section_header "Installation Complete"
+log_complete "All Kubernetes tools were installed successfully!"
+echo
+echo "${INFO_ICON} Commands available:"
+echo "  ${BOLD}kubectl${RESET} - Kubernetes CLI"
+echo "  ${BOLD}k9s${RESET}     - Kubernetes TUI with Catppuccin theme"
+echo "  ${BOLD}helm${RESET}    - Package manager for Kubernetes"
+echo "  ${BOLD}helmfile${RESET} - Declarative spec for deploying helm charts"
+echo
 
 # Remove log file if successful
 if [ $? -eq 0 ]; then
-    rm "$LOG_FILE"
+    rm -f "$LOG_FILE"
+    log "Log file removed (successful installation)"
 else
-    log_error "Script did not complete successfully; log file not removed."
+    log_warning "Script did not complete successfully; log file retained at $LOG_FILE"
 fi
 
 exit 0

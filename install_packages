@@ -6,6 +6,33 @@ source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/utils"
 source "$SCRIPT_DIR/checker"
 
+LOG_FILE="install_packages-$(date +%F).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+# Help option
+if [[ "$1" == "--help" ]]; then
+    section_header "Package Installation Help"
+    echo "Usage: install_packages [--help]"
+    echo "This script installs various tools and utilities commonly used in development environments."
+    echo
+    echo "Tools that will be installed:"
+    echo " ${INFO_ICON} starship   - Cross-shell prompt"
+    echo " ${INFO_ICON} tmux       - Terminal multiplexer"
+    echo " ${INFO_ICON} zoxide     - Smarter cd command"
+    echo " ${INFO_ICON} fzf        - Fuzzy finder"
+    echo " ${INFO_ICON} ripgrep    - Fast grep alternative"
+    echo " ${INFO_ICON} fd         - Simple, fast file finder"
+    echo " ${INFO_ICON} lazygit    - Git terminal UI"
+    echo " ${INFO_ICON} direnv     - Environment switcher"
+    echo " ${INFO_ICON} eza        - Modern ls alternative"
+    echo " ${INFO_ICON} nvim       - Neovim text editor"
+    echo " ${INFO_ICON} node       - JavaScript runtime"
+    exit 0
+fi
+
+section_header "Development Tools Installation"
+
+log_progress "Checking system prerequisites"
 check_architecture
 check_sudo
 
@@ -26,31 +53,92 @@ DIRENV_VERSION="2.35.0"
 EZA_VERSION="0.20.21"
 NODE_VERSION="22.14.0"
 
+log "Using the following versions:"
+echo " ${INFO_ICON} starship:  ${BOLD}v${STARSHIP_VERSION}${RESET}"
+echo " ${INFO_ICON} tmux:      ${BOLD}v${TMUX_VERSION}${RESET}"
+echo " ${INFO_ICON} zoxide:    ${BOLD}v${ZOXIDE_VERSION}${RESET}"
+echo " ${INFO_ICON} fzf:       ${BOLD}v${FZF_VERSION}${RESET}"
+echo " ${INFO_ICON} ripgrep:   ${BOLD}v${RG_VERSION}${RESET}"
+echo " ${INFO_ICON} fd:        ${BOLD}v${FD_VERSION}${RESET}"
+echo " ${INFO_ICON} lazygit:   ${BOLD}v${LAZYGIT_VERSION}${RESET}"
+echo " ${INFO_ICON} nvim:      ${BOLD}v${NVIM_VERSION}${RESET}"
+echo " ${INFO_ICON} direnv:    ${BOLD}v${DIRENV_VERSION}${RESET}"
+echo " ${INFO_ICON} eza:       ${BOLD}v${EZA_VERSION}${RESET}"
+echo " ${INFO_ICON} node:      ${BOLD}v${NODE_VERSION}${RESET}"
+
 # Set platforms based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
   RG_PLATFORM="${ARCH}-unknown-linux-gnu"
   LAZYGIT_PLATFORM="Linux_arm64"
   DIRENV_PLATFORM="linux-arm64"
   NODE_PLATFORM="linux-arm64"
+  log "Detected ARM64 architecture"
 else
   RG_PLATFORM="${ARCH}-unknown-linux-musl"
   LAZYGIT_PLATFORM="Linux_x86_64"
   DIRENV_PLATFORM="linux-amd64"
   NODE_PLATFORM="linux-x64"
+  log "Detected x86_64 architecture"
 fi
 
 # Installations
-log_install "Starting installation"
+section_header "Installing Tools"
+
+log_progress "Installing starship prompt..."
 install_command "starship" "curl -k -sS https://starship.rs/install.sh | $SUDO sh -s -- --yes --version v${STARSHIP_VERSION}" "starship"
+
+log_progress "Installing tmux terminal multiplexer..."
 install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux"
+
+log_progress "Installing zoxide directory navigator..."
 install_command "zoxide" "curl -k -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/v${ZOXIDE_VERSION}/install.sh | sh" "zoxide"
+
+log_progress "Installing fzf fuzzy finder..."
 install_command "fzf" "git clone --branch v${FZF_VERSION} --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all" "fzf" "$HOME/.fzf/bin/fzf"
+
+log_progress "Installing ripgrep search tool..."
 install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && $SUDO tar -xzf \"ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && \$SUDO install \"ripgrep-${RG_VERSION}-${RG_PLATFORM}/rg\" -D -t /usr/local/bin/ && rm -rf \"ripgrep-${RG_VERSION}-${RG_PLATFORM}\" \"ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\"" "rg"
+
+log_progress "Installing fd file finder..."
 install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz\" && $SUDO tar -xzf fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz && $SUDO install fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl/fd -D -t /usr/local/bin/ && rm -rf fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz" "fd"
+
+log_progress "Installing lazygit Git UI..."
 install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && $SUDO tar -xzf lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz && \$SUDO install lazygit -D -t /usr/local/bin/ && rm -rf lazygit lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz" "lazygit"
+
+log_progress "Installing direnv environment manager..."
 install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.${DIRENV_PLATFORM}\" && chmod +x direnv.${DIRENV_PLATFORM} && $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv"
+
+log_progress "Installing eza ls replacement..."
 install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-unknown-linux-gnu.tar.gz\" && $SUDO tar -xzf eza_${ARCH}-unknown-linux-gnu.tar.gz && $SUDO install eza -D -t /usr/local/bin/ && rm -rf eza eza_${ARCH}-unknown-linux-gnu.tar.gz" "eza"
+
+log_progress "Installing neovim editor..."
 install_command "nvim" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz" "nvim"
+
+log_progress "Installing node.js runtime..."
 install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz\" && tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/ && rm -rf node-v${NODE_VERSION}-${NODE_PLATFORM} node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz" "node"
 
-log_install "Installation completed"
+section_header "Installation Summary"
+log_complete "All tools have been successfully installed!"
+echo
+echo "${INFO_ICON} Tools installed:"
+echo "  ${BOLD}starship${RESET}  - Cross-shell prompt"
+echo "  ${BOLD}tmux${RESET}      - Terminal multiplexer"
+echo "  ${BOLD}zoxide${RESET}    - Smarter cd command"
+echo "  ${BOLD}fzf${RESET}       - Fuzzy finder"
+echo "  ${BOLD}ripgrep${RESET}   - Fast grep alternative"
+echo "  ${BOLD}fd${RESET}        - Simple, fast file finder"
+echo "  ${BOLD}lazygit${RESET}   - Git terminal UI"
+echo "  ${BOLD}direnv${RESET}    - Environment switcher"
+echo "  ${BOLD}eza${RESET}       - Modern ls alternative"
+echo "  ${BOLD}nvim${RESET}      - Neovim text editor"
+echo "  ${BOLD}node${RESET}      - JavaScript runtime"
+echo
+echo "Run ${BOLD}--help${RESET} for more information about each tool."
+
+# Remove log file if successful
+if [ $? -eq 0 ]; then
+    rm -f "$LOG_FILE"
+    log "Log file removed (successful installation)"
+else
+    log_warning "Script did not complete successfully; log file retained at $LOG_FILE"
+fi

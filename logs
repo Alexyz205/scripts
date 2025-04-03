@@ -1,9 +1,48 @@
 #!/bin/bash
 
-log() { echo -e "\e[34m[LOG] $1\e[0m"; }
-log_error() { echo -e "\e[31m[LOG] ERROR: $1\e[0m"; }
-error_exit() { log_error "$1"; exit 1; }
+# Define color codes for better readability
+BLUE="\e[34m"
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+CYAN="\e[36m"
+MAGENTA="\e[35m"
+BOLD="\e[1m"
+RESET="\e[0m"
 
-log_install() { echo -e "\e[32m[INSTALL] $1\e[0m"; }
-log_setup() { echo -e "\e[34m[SETUP] $1\e[0m"; }
-log_symlink() { echo -e "\e[36m[SYMLINK] $1\e[0m"; }
+# Unicode icons for better visual indication
+INFO_ICON="ℹ️ "
+ERROR_ICON="❌ "
+SUCCESS_ICON="✅ "
+INSTALL_ICON="📦 "
+SETUP_ICON="🔧 "
+SYMLINK_ICON="🔗 "
+WARNING_ICON="⚠️ "
+PROGRESS_ICON="🔄 "
+COMPLETE_ICON="🎉 "
+
+# Standard log functions with icons
+log() { echo -e "${BLUE}${INFO_ICON}[INFO]${RESET} $1"; }
+log_error() { echo -e "${RED}${ERROR_ICON}[ERROR]${RESET} $1"; }
+error_exit() { log_error "$1"; exit 1; }
+log_success() { echo -e "${GREEN}${SUCCESS_ICON}[SUCCESS]${RESET} $1"; }
+log_warning() { echo -e "${YELLOW}${WARNING_ICON}[WARNING]${RESET} $1"; }
+
+# Task-specific log functions
+log_install() { echo -e "${GREEN}${INSTALL_ICON}[INSTALL]${RESET} $1"; }
+log_setup() { echo -e "${BLUE}${SETUP_ICON}[SETUP]${RESET} $1"; }
+log_symlink() { echo -e "${CYAN}${SYMLINK_ICON}[SYMLINK]${RESET} $1"; }
+
+# Progress indicators
+log_progress() { echo -e "${CYAN}${PROGRESS_ICON}[PROGRESS]${RESET} $1"; }
+log_complete() { echo -e "${MAGENTA}${COMPLETE_ICON}[COMPLETE]${RESET} $1"; }
+
+# Function to display a section header
+section_header() {
+    local title=$1
+    local width=60
+    local padding=$(( (width - ${#title} - 4) / 2 ))
+    echo -e "\n${BOLD}${BLUE}$( printf '═%.0s' $(seq 1 $width) )${RESET}"
+    echo -e "${BOLD}${BLUE}$(printf '═%.0s' $(seq 1 $padding))${RESET} ${BOLD}${title}${RESET} ${BOLD}${BLUE}$(printf '═%.0s' $(seq 1 $padding))${RESET}"
+    echo -e "${BOLD}${BLUE}$( printf '═%.0s' $(seq 1 $width) )${RESET}\n"
+}

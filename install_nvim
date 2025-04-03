@@ -6,14 +6,32 @@ source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/utils"
 source "$SCRIPT_DIR/checker"
 
+LOG_FILE="install_nvim-$(date +%F).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 # Parse optional argument
 PACKAGE_MODE=install
-if [ "$1" == "--targz" ]; then
+if [ "$1" == "--help" ]; then
+    section_header "Neovim Build & Install"
+    echo "Usage: install_nvim [--targz]"
+    echo "This script builds Neovim from source and installs it on your system."
+    echo
+    echo "Options:"
+    echo " ${INFO_ICON} --targz    - Create a distributable tar.gz package instead of installing"
+    echo " ${INFO_ICON} --help     - Display this help message"
+    exit 0
+elif [ "$1" == "--targz" ]; then
     PACKAGE_MODE=targz
+    log "Running in packaging mode (--targz)"
 fi
 
+section_header "Neovim Build Environment"
+
+# Check for dependencies
+log_progress "Checking and installing build dependencies..."
 check_and_install_dependencies curl tar git cmake ninja-build make
 
+log_progress "Checking system architecture..."
 check_architecture
 check_sudo
 
@@ -23,42 +41,71 @@ NVIM_DIR="$(pwd)/neovim"
 
 # Clone or update neovim repo
 if [ -d "$NVIM_DIR" ]; then
-    echo "[BUILD_NVIM] Updating existing neovim repository."
+    log_progress "Updating existing Neovim repository"
     cd "$NVIM_DIR"
     git pull
 else
-    echo "[BUILD_NVIM] Cloning neovim repository."
+    log_progress "Cloning Neovim repository"
     git clone "$NVIM_REPO" "$NVIM_DIR"
     cd "$NVIM_DIR"
 fi
 
 # Build neovim
-echo "[BUILD_NVIM] Building neovim."
+section_header "Building Neovim"
+
+log_progress "Compiling Neovim (Release build)"
 make CMAKE_BUILD_TYPE=Release
 
 if [ "$PACKAGE_MODE" = "targz" ]; then
-    echo "[BUILD_NVIM] Packaging neovim as tar.gz release."
+    section_header "Creating Distributable Package"
+
+    log_progress "Creating packaging directory structure"
     # Create staging directory for installation
     STAGING_DIR="$(pwd)/release_staging"
     rm -rf "$STAGING_DIR"
     mkdir -p "$STAGING_DIR"
+
+    log_progress "Installing to staging directory..."
     # Install to staging directory (files go under STAGING_DIR/usr/local)
     make install DESTDIR="$STAGING_DIR"
+
+    log_progress "Setting up package structure"
     # Create package directory with desired top-level folder structure
-    PKG_DIR="$(pwd)/nvim-linux-arm64"
+    PKG_DIR="$(pwd)/nvim-linux-$ARCH"
     rm -rf "$PKG_DIR"
     mkdir -p "$PKG_DIR"
+
     # Move installed files so that they appear under nvim-linux-arm64/
     mv "$STAGING_DIR/usr/local/"* "$PKG_DIR/"
+
+    log_progress "Extracting version information"
     # Extract version from the built nvim binary
     NVIM_VERSION=$("$PKG_DIR/bin/nvim" --version | head -n 1 | awk '{print $2}')
     TAR_NAME="nvim_release_${NVIM_VERSION}.tar.gz"
+
+    log_progress "Creating tarball: $TAR_NAME"
     # Create tar.gz with top-level folder nvim-linux-arm64 and the version included
-    tar -czvf "$TAR_NAME" -C "$(pwd)" "nvim-linux-arm64"
-    echo "[BUILD_NVIM] Packaged neovim as ${TAR_NAME}."
+    tar -czvf "$TAR_NAME" -C "$(pwd)" "nvim-linux-$ARCH"
+
+    log_success "Packaged Neovim as ${TAR_NAME}"
+    echo "${SUCCESS_ICON} Package created at: $(pwd)/${TAR_NAME}"
 else
-    echo "[BUILD_NVIM] Installing neovim (may require sudo)."
-    sudo make install
+    section_header "Installing Neovim"
+
+    log_progress "Installing Neovim system-wide (may require sudo)"
+    $SUDO make install
+    log_success "Neovim installed successfully"
+
+    echo "${INFO_ICON} Verify installation with: ${BOLD}nvim --version${RESET}"
 fi
 
-echo "[BUILD_NVIM] Neovim process completed."
+section_header "Process Complete"
+log_complete "Neovim build process completed successfully!"
+
+# Remove log file if successful
+if [ $? -eq 0 ]; then
+    rm -f "$LOG_FILE"
+    log "Log file removed (successful installation)"
+else
+    log_warning "Script did not complete successfully; log file retained at $LOG_FILE"
+fi
