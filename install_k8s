@@ -43,6 +43,9 @@ install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/downl
 install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz\" && $SUDO tar -xzf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz --strip-components=1 -C /usr/local/bin/ linux-${PLATFORM}/helm && rm -rf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz" "helm"
 install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz\" && $SUDO tar -xzf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz -C /usr/local/bin/ helmfile && rm -rf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz" "helmfile"
 
+# Install Helm diff plugin
+install_command "helm-diff" "helm plugin install https://github.com/databus23/helm-diff" "helm plugin list | grep -q diff"
+
 # Fetch and set the Catppuccin theme for k9s
 THEME_URL="https://github.com/catppuccin/k9s/raw/main/dist/catppuccin-mocha-transparent.yaml"
 THEME_DIR="$HOME/.config/k9s/skins"
