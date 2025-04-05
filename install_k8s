@@ -40,10 +40,10 @@ HELM_VERSION="3.17.1"
 HELMFILE_VERSION="0.171.0"
 
 log "Using the following versions:"
-echo " ${INFO_ICON} kubectl:   ${BOLD}v${KUBECTL_VERSION}${RESET}"
-echo " ${INFO_ICON} k9s:       ${BOLD}v${K9S_VERSION}${RESET}"
-echo " ${INFO_ICON} helm:      ${BOLD}v${HELM_VERSION}${RESET}"
-echo " ${INFO_ICON} helmfile:  ${BOLD}v${HELMFILE_VERSION}${RESET}"
+echo -e " ${INFO_ICON} kubectl:   ${BOLD}v${KUBECTL_VERSION}${RESET}"
+echo -e " ${INFO_ICON} k9s:       ${BOLD}v${K9S_VERSION}${RESET}"
+echo -e " ${INFO_ICON} helm:      ${BOLD}v${HELM_VERSION}${RESET}"
+echo -e " ${INFO_ICON} helmfile:  ${BOLD}v${HELMFILE_VERSION}${RESET}"
 
 # Set platform based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
@@ -60,7 +60,7 @@ fi
 section_header "Installing Command-Line Tools"
 
 log_progress "Installing kubectl..."
-install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${PLATFORM}/kubectl\" && chmod +x kubectl && \$SUDO install -D kubectl /usr/local/bin/kubectl" "kubectl"
+install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${PLATFORM}/kubectl\" && chmod +x kubectl && \$SUDO install -D kubectl /usr/local/bin/kubectl && rm -f kubectl" "kubectl"
 
 log_progress "Installing k9s..."
 install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${PLATFORM}.tar.gz\" && $SUDO tar -xzf k9s_Linux_${PLATFORM}.tar.gz -C /usr/local/bin/ k9s && rm -rf k9s_Linux_${PLATFORM}.tar.gz" "k9s"
@@ -103,10 +103,10 @@ section_header "Installation Complete"
 log_complete "All Kubernetes tools were installed successfully!"
 echo
 echo "${INFO_ICON} Commands available:"
-echo "  ${BOLD}kubectl${RESET} - Kubernetes CLI"
-echo "  ${BOLD}k9s${RESET}     - Kubernetes TUI with Catppuccin theme"
-echo "  ${BOLD}helm${RESET}    - Package manager for Kubernetes"
-echo "  ${BOLD}helmfile${RESET} - Declarative spec for deploying helm charts"
+echo -e "  ${BOLD}kubectl${RESET} - Kubernetes CLI"
+echo -e "  ${BOLD}k9s${RESET}     - Kubernetes TUI with Catppuccin theme"
+echo -e "  ${BOLD}helm${RESET}    - Package manager for Kubernetes"
+echo -e "  ${BOLD}helmfile${RESET} - Declarative spec for deploying helm charts"
 echo
 
 # Remove log file if successful
