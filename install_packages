@@ -16,17 +16,17 @@ if [[ "$1" == "--help" ]]; then
     echo "This script installs various tools and utilities commonly used in development environments."
     echo
     echo "Tools that will be installed:"
-    echo " ${INFO_ICON} starship   - Cross-shell prompt"
-    echo " ${INFO_ICON} tmux       - Terminal multiplexer"
-    echo " ${INFO_ICON} zoxide     - Smarter cd command"
-    echo " ${INFO_ICON} fzf        - Fuzzy finder"
-    echo " ${INFO_ICON} ripgrep    - Fast grep alternative"
-    echo " ${INFO_ICON} fd         - Simple, fast file finder"
-    echo " ${INFO_ICON} lazygit    - Git terminal UI"
-    echo " ${INFO_ICON} direnv     - Environment switcher"
-    echo " ${INFO_ICON} eza        - Modern ls alternative"
-    echo " ${INFO_ICON} nvim       - Neovim text editor"
-    echo " ${INFO_ICON} node       - JavaScript runtime"
+    echo -e "${INFO_ICON} starship   - Cross-shell prompt"
+    echo -e "${INFO_ICON} tmux       - Terminal multiplexer"
+    echo -e "${INFO_ICON} zoxide     - Smarter cd command"
+    echo -e "${INFO_ICON} fzf        - Fuzzy finder"
+    echo -e "${INFO_ICON} ripgrep    - Fast grep alternative"
+    echo -e "${INFO_ICON} fd         - Simple, fast file finder"
+    echo -e "${INFO_ICON} lazygit    - Git terminal UI"
+    echo -e "${INFO_ICON} direnv     - Environment switcher"
+    echo -e "${INFO_ICON} eza        - Modern ls alternative"
+    echo -e "${INFO_ICON} nvim       - Neovim text editor"
+    echo -e "${INFO_ICON} node       - JavaScript runtime"
     exit 0
 fi
 
@@ -54,17 +54,17 @@ EZA_VERSION="0.20.21"
 NODE_VERSION="22.14.0"
 
 log "Using the following versions:"
-echo " ${INFO_ICON} starship:  ${BOLD}v${STARSHIP_VERSION}${RESET}"
-echo " ${INFO_ICON} tmux:      ${BOLD}v${TMUX_VERSION}${RESET}"
-echo " ${INFO_ICON} zoxide:    ${BOLD}v${ZOXIDE_VERSION}${RESET}"
-echo " ${INFO_ICON} fzf:       ${BOLD}v${FZF_VERSION}${RESET}"
-echo " ${INFO_ICON} ripgrep:   ${BOLD}v${RG_VERSION}${RESET}"
-echo " ${INFO_ICON} fd:        ${BOLD}v${FD_VERSION}${RESET}"
-echo " ${INFO_ICON} lazygit:   ${BOLD}v${LAZYGIT_VERSION}${RESET}"
-echo " ${INFO_ICON} nvim:      ${BOLD}v${NVIM_VERSION}${RESET}"
-echo " ${INFO_ICON} direnv:    ${BOLD}v${DIRENV_VERSION}${RESET}"
-echo " ${INFO_ICON} eza:       ${BOLD}v${EZA_VERSION}${RESET}"
-echo " ${INFO_ICON} node:      ${BOLD}v${NODE_VERSION}${RESET}"
+echo -e "${INFO_ICON} starship:  ${BOLD}v${STARSHIP_VERSION}${RESET}"
+echo -e "${INFO_ICON} tmux:      ${BOLD}v${TMUX_VERSION}${RESET}"
+echo -e "${INFO_ICON} zoxide:    ${BOLD}v${ZOXIDE_VERSION}${RESET}"
+echo -e "${INFO_ICON} fzf:       ${BOLD}v${FZF_VERSION}${RESET}"
+echo -e "${INFO_ICON} ripgrep:   ${BOLD}v${RG_VERSION}${RESET}"
+echo -e "${INFO_ICON} fd:        ${BOLD}v${FD_VERSION}${RESET}"
+echo -e "${INFO_ICON} lazygit:   ${BOLD}v${LAZYGIT_VERSION}${RESET}"
+echo -e "${INFO_ICON} nvim:      ${BOLD}v${NVIM_VERSION}${RESET}"
+echo -e "${INFO_ICON} direnv:    ${BOLD}v${DIRENV_VERSION}${RESET}"
+echo -e "${INFO_ICON} eza:       ${BOLD}v${EZA_VERSION}${RESET}"
+echo -e "${INFO_ICON} node:      ${BOLD}v${NODE_VERSION}${RESET}"
 
 # Set platforms based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
@@ -93,7 +93,12 @@ log_progress "Installing tmux terminal multiplexer..."
 install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && rm tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux"
 
 log_progress "Installing zoxide directory navigator..."
-install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ZOXIDE_PLATFORM}.tar.gz\" | $SUDO tar -xz --strip-components=1 -C /usr/local/bin zoxide && $SUDO chmod +x /usr/local/bin/zoxide" "zoxide"
+install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ZOXIDE_PLATFORM}.tar.gz\" -o zoxide.tar.gz && \
+  mkdir -p zoxide_temp && \
+  tar -xzf zoxide.tar.gz -C zoxide_temp && \
+  $SUDO cp zoxide_temp/zoxide /usr/local/bin/ && \
+  $SUDO chmod +x /usr/local/bin/zoxide && \
+  rm -rf zoxide_temp zoxide.tar.gz" "zoxide"
 
 log_progress "Installing fzf fuzzy finder..."
 install_command "fzf" "git clone --branch v${FZF_VERSION} --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all" "fzf" "$HOME/.fzf/bin/fzf"
@@ -105,7 +110,11 @@ log_progress "Installing fd file finder..."
 install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz\" && $SUDO tar -xzf fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz && $SUDO install fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl/fd -D -t /usr/local/bin/ && rm -rf fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz" "fd"
 
 log_progress "Installing lazygit Git UI..."
-install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && $SUDO tar -xzf lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz && \$SUDO install lazygit -D -t /usr/local/bin/ && rm -rf lazygit lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz" "lazygit"
+install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && \
+  mkdir -p lazygit_temp && \
+  tar -xzf lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz -C lazygit_temp && \
+  $SUDO install lazygit_temp/lazygit -D -t /usr/local/bin/ && \
+  rm -rf lazygit_temp lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz" "lazygit"
 
 log_progress "Installing direnv environment manager..."
 install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.${DIRENV_PLATFORM}\" && chmod +x direnv.${DIRENV_PLATFORM} && $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv"
@@ -135,7 +144,7 @@ echo -e "  ${BOLD}eza${RESET}       - Modern ls alternative"
 echo -e "  ${BOLD}nvim${RESET}      - Neovim text editor"
 echo -e "  ${BOLD}node${RESET}      - JavaScript runtime"
 echo
-echo "Run ${BOLD}--help${RESET} for more information about each tool."
+echo -e "Run ${BOLD}--help${RESET} for more information about each tool."
 
 # Remove log file if successful
 if [ $? -eq 0 ]; then
