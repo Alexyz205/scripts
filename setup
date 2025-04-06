@@ -14,16 +14,16 @@ if [[ "$1" == "--help" ]]; then
     echo "This script creates necessary directories and symlinks for dotfiles configuration."
     echo
     echo "${INFO_ICON} Configuration directories will be created at:"
-    echo "  ${BOLD}$XDG_CONFIG_HOME${RESET}"
+    echo -e "  ${BOLD}$XDG_CONFIG_HOME${RESET}"
     echo
     echo "${INFO_ICON} The following configurations will be linked:"
-    echo "  ${BOLD}ghostty${RESET}       - Modern terminal emulator"
-    echo "  ${BOLD}nix${RESET}           - Nix package manager"
-    echo "  ${BOLD}tmux${RESET}          - Terminal multiplexer"
-    echo "  ${BOLD}nvim${RESET}          - Neovim text editor"
-    echo "  ${BOLD}starship${RESET}      - Cross-shell prompt"
-    echo "  ${BOLD}zsh${RESET}           - Z shell configuration"
-    echo "  ${BOLD}bash${RESET}          - Bash shell configuration"
+    echo -e "  ${BOLD}ghostty${RESET}       - Modern terminal emulator"
+    echo -e "  ${BOLD}nix${RESET}           - Nix package manager"
+    echo -e "  ${BOLD}tmux${RESET}          - Terminal multiplexer"
+    echo -e "  ${BOLD}nvim${RESET}          - Neovim text editor"
+    echo -e "  ${BOLD}starship${RESET}      - Cross-shell prompt"
+    echo -e "  ${BOLD}zsh${RESET}           - Z shell configuration"
+    echo -e "  ${BOLD}bash${RESET}          - Bash shell configuration"
     exit 0
 fi
 
@@ -70,10 +70,10 @@ section_header "Setup Complete"
 log_complete "Dotfiles have been successfully configured!"
 echo
 echo "${SUCCESS_ICON} The following configurations have been set up:"
-echo "  ${BOLD}Shell${RESET}       - ZSH and Bash configurations"
-echo "  ${BOLD}Terminal${RESET}    - Ghostty terminal and tmux multiplexer"
-echo "  ${BOLD}Editor${RESET}      - Neovim configuration"
-echo "  ${BOLD}Prompt${RESET}      - Starship cross-shell prompt"
-echo "  ${BOLD}Package Mgr${RESET} - Nix configuration"
+echo -e "  ${BOLD}Shell${RESET}       - ZSH and Bash configurations"
+echo -e "  ${BOLD}Terminal${RESET}    - Ghostty terminal and tmux multiplexer"
+echo -e "  ${BOLD}Editor${RESET}      - Neovim configuration"
+echo -e "  ${BOLD}Prompt${RESET}      - Starship cross-shell prompt"
+echo -e "  ${BOLD}Package Mgr${RESET} - Nix configuration"
 echo
 echo "${INFO_ICON} You may need to restart your shell or terminal to see the changes"
