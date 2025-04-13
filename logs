@@ -28,13 +28,3 @@ section_header() {
     local title=$1
     echo -e "\n===== $title =====\n"
 }
-
-# Function to detect if running in a container/CI environment
-is_automated_environment() {
-    [[ -n "${CI}" || -n "${CONTAINER}" || -n "${DEVCONTAINER}" ]]
-}
-
-# Function to detect if we're running in a devcontainer
-is_devcontainer() {
-    [[ -n "${DEVCONTAINER}" || -n "${CODESPACES}" || -f "/.dockerenv" && -d "/workspaces" ]]
-}
