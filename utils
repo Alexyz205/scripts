@@ -14,14 +14,17 @@ create_temp_dir() {
     local temp_dir
 
     # Create a unique timestamped temp directory inside system temp
-    temp_dir=$(mktemp -d "/tmp/${prefix}_$(date +%Y%m%d%H%M%S)_XXXXXX")
+    # Use stderr for logging to avoid capturing in command substitution
+    temp_dir=$(mktemp -d "/tmp/${prefix}_$(date +%Y%m%d%H%M%S)_XXXXXX") || {
+        log_error "Failed to create temporary directory for $prefix" >&2
+        return 1
+    }
 
-    if [ -d "$temp_dir" ]; then
-        log_progress "Created temporary directory: $temp_dir"
-        echo "$temp_dir"
-    else
-        error_exit "Failed to create temporary directory for $prefix"
-    fi
+    # Log to stderr instead of stdout to avoid capturing in the return value
+    log_progress "Created temporary directory: $temp_dir" >&2
+
+    # Only output the directory path to stdout
+    echo "$temp_dir"
 }
 
 # Clean up a temporary directory
@@ -50,11 +53,20 @@ run_in_temp_dir() {
     local result=0
 
     current_dir=$(pwd)
-    temp_dir=$(create_temp_dir "$prefix")
+    # Create temp directory and verify it exists
+    temp_dir=$(create_temp_dir "$prefix") || return 1
+
+    if [ ! -d "$temp_dir" ]; then
+        log_error "Invalid temporary directory path: $temp_dir"
+        return 1
+    fi
 
     # Execute in temp directory with error handling
     log_progress "Running command in temporary directory: $temp_dir"
-    cd "$temp_dir" || error_exit "Failed to change to temporary directory"
+    cd "$temp_dir" || {
+        log_error "Failed to change to temporary directory: $temp_dir"
+        return 1
+    }
 
     # Use eval to execute the command and capture its exit status
     eval "$command"
