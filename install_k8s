@@ -6,8 +6,33 @@ source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/utils"
 source "$SCRIPT_DIR/checker"
 
-LOG_FILE="install_k8s-$(date +%F).log"
+# Create a global temp directory for logs and other shared resources
+INSTALL_TEMP_DIR=$(create_temp_dir "k8s_install")
+LOG_FILE="$INSTALL_TEMP_DIR/install_k8s-$(date +%F).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
+
+# Cleanup function to ensure temp directory is removed on exit
+cleanup() {
+    local exit_code=$?
+
+    # Keep log file only if there was an error
+    if [ $exit_code -eq 0 ]; then
+        log "Installation completed successfully, cleaning up temporary files"
+    else
+        # Copy log to home directory for troubleshooting if there was an error
+        local backup_log="$HOME/k8s_install_error-$(date +%F-%H%M%S).log"
+        cp "$LOG_FILE" "$backup_log"
+        log_warning "Installation encountered an error, log saved to $backup_log"
+    fi
+
+    # Clean up the temp directory
+    cleanup_temp_dir "$INSTALL_TEMP_DIR"
+
+    exit $exit_code
+}
+
+# Register cleanup function to run on script exit
+trap cleanup EXIT
 
 # Help option
 if [[ "$1" == "--help" ]]; then
@@ -60,16 +85,16 @@ fi
 section_header "Installing Command-Line Tools"
 
 log_progress "Installing kubectl..."
-install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${PLATFORM}/kubectl\" && chmod +x kubectl && \$SUDO install -D kubectl /usr/local/bin/kubectl && rm -f kubectl" "kubectl"
+install_command "kubectl" "curl -LO \"https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${PLATFORM}/kubectl\" && chmod +x kubectl && \$SUDO install -D kubectl /usr/local/bin/kubectl" "kubectl"
 
 log_progress "Installing k9s..."
-install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${PLATFORM}.tar.gz\" && $SUDO tar -xzf k9s_Linux_${PLATFORM}.tar.gz -C /usr/local/bin/ k9s && rm -rf k9s_Linux_${PLATFORM}.tar.gz" "k9s"
+install_command "k9s" "curl -LO \"https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${PLATFORM}.tar.gz\" && tar -xzf k9s_Linux_${PLATFORM}.tar.gz && \$SUDO install -D k9s /usr/local/bin/k9s" "k9s"
 
 log_progress "Installing helm..."
-install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz\" && $SUDO tar -xzf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz --strip-components=1 -C /usr/local/bin/ linux-${PLATFORM}/helm && rm -rf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz" "helm"
+install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz\" && tar -xzf helm-v${HELM_VERSION}-linux-${PLATFORM}.tar.gz && \$SUDO install -D linux-${PLATFORM}/helm /usr/local/bin/helm" "helm"
 
 log_progress "Installing helmfile..."
-install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz\" && $SUDO tar -xzf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz -C /usr/local/bin/ helmfile && rm -rf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz" "helmfile"
+install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz\" && tar -xzf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz && \$SUDO install -D helmfile /usr/local/bin/helmfile" "helmfile"
 
 # Install Helm diff plugin
 log_progress "Installing Helm plugins..."
@@ -84,7 +109,9 @@ THEME_FILE="$THEME_DIR/catppuccin-mocha-transparent.yaml"
 
 log_progress "Fetching Catppuccin theme for k9s"
 mkdir -p "$THEME_DIR"
-curl -Lo "$THEME_FILE" "$THEME_URL" || error_exit "Failed to fetch Catppuccin theme."
+
+# Use temporary directory for downloading theme
+run_in_temp_dir "k9s_theme" "curl -L \"$THEME_URL\" -o theme.yaml && cp theme.yaml \"$THEME_FILE\"" || error_exit "Failed to fetch Catppuccin theme."
 log_success "Downloaded theme to $THEME_FILE"
 
 # Configure k9s to use the theme
@@ -108,13 +135,5 @@ echo -e "  ${BOLD}k9s${RESET}     - Kubernetes TUI with Catppuccin theme"
 echo -e "  ${BOLD}helm${RESET}    - Package manager for Kubernetes"
 echo -e "  ${BOLD}helmfile${RESET} - Declarative spec for deploying helm charts"
 echo
-
-# Remove log file if successful
-if [ $? -eq 0 ]; then
-    rm -f "$LOG_FILE"
-    log "Log file removed (successful installation)"
-else
-    log_warning "Script did not complete successfully; log file retained at $LOG_FILE"
-fi
 
 exit 0

@@ -13,30 +13,30 @@ if [[ "$1" == "--help" ]]; then
     echo "Usage: setup [--help]"
     echo "This script creates necessary directories and symlinks for dotfiles configuration."
     echo
-    echo "${INFO_ICON} Configuration directories will be created at:"
-    echo -e "  ${BOLD}$XDG_CONFIG_HOME${RESET}"
+    echo "Configuration directories will be created at:"
+    echo "  $XDG_CONFIG_HOME"
     echo
-    echo "${INFO_ICON} The following configurations will be linked:"
-    echo -e "  ${BOLD}ghostty${RESET}       - Modern terminal emulator"
-    echo -e "  ${BOLD}nix${RESET}           - Nix package manager"
-    echo -e "  ${BOLD}tmux${RESET}          - Terminal multiplexer"
-    echo -e "  ${BOLD}nvim${RESET}          - Neovim text editor"
-    echo -e "  ${BOLD}starship${RESET}      - Cross-shell prompt"
-    echo -e "  ${BOLD}zsh${RESET}           - Z shell configuration"
-    echo -e "  ${BOLD}bash${RESET}          - Bash shell configuration"
+    echo "The following configurations will be linked:"
+    echo "  - ghostty       - Modern terminal emulator"
+    echo "  - nix           - Nix package manager"
+    echo "  - tmux          - Terminal multiplexer"
+    echo "  - nvim          - Neovim text editor"
+    echo "  - starship      - Cross-shell prompt"
+    echo "  - zsh           - Z shell configuration"
+    echo "  - bash          - Bash shell configuration"
     exit 0
 fi
 
 section_header "Dotfiles Setup"
 
-log "Configuration will be set up in ${BOLD}$HOME${RESET} and ${BOLD}$XDG_CONFIG_HOME${RESET}"
+log "Configuration will be set up in $HOME and $XDG_CONFIG_HOME"
 
 # Get dotfiles directory
 if [ -z "$DOTFILES_DIR" ]; then
     DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-    log_warning "DOTFILES_DIR wasn't set, using: ${BOLD}$DOTFILES_DIR${RESET}"
+    log_warning "DOTFILES_DIR wasn't set, using: $DOTFILES_DIR"
 else
-    log "Using dotfiles directory: ${BOLD}$DOTFILES_DIR${RESET}"
+    log "Using dotfiles directory: $DOTFILES_DIR"
 fi
 
 # Define common directories to create
@@ -69,11 +69,11 @@ create_symlinks "${common_items[@]}"
 section_header "Setup Complete"
 log_complete "Dotfiles have been successfully configured!"
 echo
-echo "${SUCCESS_ICON} The following configurations have been set up:"
-echo -e "  ${BOLD}Shell${RESET}       - ZSH and Bash configurations"
-echo -e "  ${BOLD}Terminal${RESET}    - Ghostty terminal and tmux multiplexer"
-echo -e "  ${BOLD}Editor${RESET}      - Neovim configuration"
-echo -e "  ${BOLD}Prompt${RESET}      - Starship cross-shell prompt"
-echo -e "  ${BOLD}Package Mgr${RESET} - Nix configuration"
+echo "The following configurations have been set up:"
+echo "  - Shell       - ZSH and Bash configurations"
+echo "  - Terminal    - Ghostty terminal and tmux multiplexer"
+echo "  - Editor      - Neovim configuration"
+echo "  - Prompt      - Starship cross-shell prompt"
+echo "  - Package Mgr - Nix configuration"
 echo
-echo "${INFO_ICON} You may need to restart your shell or terminal to see the changes"
+echo "You may need to restart your shell or terminal to see the changes"

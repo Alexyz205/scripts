@@ -1,48 +1,40 @@
 #!/bin/bash
+#
+# Simple, consistent logging system for dotfiles scripts
+# Provides standardized logging functions with timestamp and log type
 
-# Define color codes for better readability
-BLUE="\e[34m"
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-CYAN="\e[36m"
-MAGENTA="\e[35m"
-BOLD="\e[1m"
-RESET="\e[0m"
+# Function to get current timestamp in ISO 8601 format
+get_timestamp() {
+  date +"%Y-%m-%d %H:%M:%S"
+}
 
-# Unicode icons for better visual indication
-INFO_ICON="ℹ️ "
-ERROR_ICON="❌ "
-SUCCESS_ICON="✅ "
-INSTALL_ICON="📦 "
-SETUP_ICON="🔧 "
-SYMLINK_ICON="🔗 "
-WARNING_ICON="⚠️ "
-PROGRESS_ICON="🔄 "
-COMPLETE_ICON="🎉 "
+# Core logging functions with timestamp and log type - no fancy formatting
+log() { echo "[$(get_timestamp)][INFO] $1"; }
+log_error() { echo "[$(get_timestamp)][ERROR] $1"; }
+log_success() { echo "[$(get_timestamp)][SUCCESS] $1"; }
+log_warning() { echo "[$(get_timestamp)][WARNING] $1"; }
 
-# Standard log functions with icons
-log() { echo -e "${BLUE}${INFO_ICON}[INFO]${RESET} $1"; }
-log_error() { echo -e "${RED}${ERROR_ICON}[ERROR]${RESET} $1"; }
+# Task-specific logging functions
+log_install() { echo "[$(get_timestamp)][INSTALL] $1"; }
+log_setup() { echo "[$(get_timestamp)][SETUP] $1"; }
+log_progress() { echo "[$(get_timestamp)][PROGRESS] $1"; }
+log_complete() { echo "[$(get_timestamp)][COMPLETE] $1"; }
+
+# Error and exit helper
 error_exit() { log_error "$1"; exit 1; }
-log_success() { echo -e "${GREEN}${SUCCESS_ICON}[SUCCESS]${RESET} $1"; }
-log_warning() { echo -e "${YELLOW}${WARNING_ICON}[WARNING]${RESET} $1"; }
 
-# Task-specific log functions
-log_install() { echo -e "${GREEN}${INSTALL_ICON}[INSTALL]${RESET} $1"; }
-log_setup() { echo -e "${BLUE}${SETUP_ICON}[SETUP]${RESET} $1"; }
-log_symlink() { echo -e "${CYAN}${SYMLINK_ICON}[SYMLINK]${RESET} $1"; }
-
-# Progress indicators
-log_progress() { echo -e "${CYAN}${PROGRESS_ICON}[PROGRESS]${RESET} $1"; }
-log_complete() { echo -e "${MAGENTA}${COMPLETE_ICON}[COMPLETE]${RESET} $1"; }
-
-# Function to display a section header
+# Simple section header
 section_header() {
     local title=$1
-    local width=60
-    local padding=$(( (width - ${#title} - 4) / 2 ))
-    echo -e "\n${BOLD}${BLUE}$( printf '═%.0s' $(seq 1 $width) )${RESET}"
-    echo -e "${BOLD}${BLUE}$(printf '═%.0s' $(seq 1 $padding))${RESET} ${BOLD}${title}${RESET} ${BOLD}${BLUE}$(printf '═%.0s' $(seq 1 $padding))${RESET}"
-    echo -e "${BOLD}${BLUE}$( printf '═%.0s' $(seq 1 $width) )${RESET}\n"
+    echo -e "\n===== $title =====\n"
+}
+
+# Function to detect if running in a container/CI environment
+is_automated_environment() {
+    [[ -n "${CI}" || -n "${CONTAINER}" || -n "${DEVCONTAINER}" ]]
+}
+
+# Function to detect if we're running in a devcontainer
+is_devcontainer() {
+    [[ -n "${DEVCONTAINER}" || -n "${CODESPACES}" || -f "/.dockerenv" && -d "/workspaces" ]]
 }

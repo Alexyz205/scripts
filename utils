@@ -4,8 +4,74 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/checker"
 
+# Domain-level concept: Temp directory management with proper lifecycle
+# ---------------------------------------------------------------------
+
+# Create a unique temporary directory and return its path
+# Usage: TEMP_DIR=$(create_temp_dir "package_name")
+create_temp_dir() {
+    local prefix="${1:-install}"
+    local temp_dir
+
+    # Create a unique timestamped temp directory inside system temp
+    temp_dir=$(mktemp -d "/tmp/${prefix}_$(date +%Y%m%d%H%M%S)_XXXXXX")
+
+    if [ -d "$temp_dir" ]; then
+        log_progress "Created temporary directory: $temp_dir"
+        echo "$temp_dir"
+    else
+        error_exit "Failed to create temporary directory for $prefix"
+    fi
+}
+
+# Clean up a temporary directory
+# Usage: cleanup_temp_dir "$TEMP_DIR"
+cleanup_temp_dir() {
+    local temp_dir="$1"
+
+    if [ -d "$temp_dir" ]; then
+        log_progress "Cleaning up temporary directory: $temp_dir"
+        rm -rf "$temp_dir"
+        if [ -d "$temp_dir" ]; then
+            log_warning "Failed to remove temporary directory: $temp_dir"
+        else
+            log_progress "Successfully removed temporary directory"
+        fi
+    fi
+}
+
+# Execute a command in a temporary directory, with proper cleanup
+# Usage: run_in_temp_dir "package_name" "command to execute"
+run_in_temp_dir() {
+    local prefix="$1"
+    local command="$2"
+    local current_dir
+    local temp_dir
+    local result=0
+
+    current_dir=$(pwd)
+    temp_dir=$(create_temp_dir "$prefix")
+
+    # Execute in temp directory with error handling
+    log_progress "Running command in temporary directory: $temp_dir"
+    cd "$temp_dir" || error_exit "Failed to change to temporary directory"
+
+    # Use eval to execute the command and capture its exit status
+    eval "$command"
+    result=$?
+
+    # Return to original directory
+    cd "$current_dir" || log_warning "Failed to return to original directory: $current_dir"
+
+    # Clean up temp directory regardless of command success/failure
+    cleanup_temp_dir "$temp_dir"
+
+    # Return the original command's exit status
+    return $result
+}
+
 check_dependency() {
-    command -v "$1" &> /dev/null || { echo "Error: $1 is required but not installed."; exit 1; }
+    command -v "$1" &> /dev/null || { log_error "$1 is required but not installed."; exit 1; }
 }
 
 install_command() {
@@ -17,7 +83,7 @@ install_command() {
     if [ -n "$check_path" ] && [ -x "$check_path" ]; then
         log_install "$name is already installed at $check_path."
     elif ! command -v $check_cmd &> /dev/null; then
-        eval $install_cmd || error_exit "Failed to install $name."
+        run_in_temp_dir "$name" "$install_cmd" || error_exit "Failed to install $name."
         log_install "$name installed successfully."
     else
         log_install "$name is already installed."
@@ -31,13 +97,13 @@ check_and_install_dependencies() {
     elif command -v brew &> /dev/null; then
         PACKAGE_MANAGER="brew"
     else
-        log_install "No supported package manager found. Please install required dependencies manually."
+        log_error "No supported package manager found. Please install required dependencies manually."
         exit 1
     fi
 
     check_sudo
 
-    log_install "Checking and installing missing dependencies..."
+    log_progress "Checking and installing missing dependencies..."
     for dep in "${dependencies[@]}"; do
         if ! command -v "$dep" &> /dev/null; then
             log_install "Installing $dep..."
@@ -59,13 +125,13 @@ create_symlinks() {
 
         # Check if target exists (file, symlink, or directory) and remove it
         if [ -e "$target" ] || [ -L "$target" ]; then
-            log_symlink "Removing existing file/directory/symlink: $target"
+            log_progress "Removing existing file/directory/symlink: $target"
             rm -rf "$target"
         fi
 
         # Create the new symlink
         ln -s "$DOTFILES_DIR/$source" "$target" || error_exit "Error creating symlink $target"
-        log_symlink "Created symlink for $source -> $target"
+        log_success "Created symlink for $source -> $target"
     done
 }
 
@@ -74,4 +140,5 @@ create_directories() {
     for dir in "${directories[@]}"; do
         mkdir -p "$dir" || error_exit "Error creating directory $dir"
     done
+    log_success "Created required directories"
 }

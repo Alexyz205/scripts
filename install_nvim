@@ -6,8 +6,33 @@ source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/utils"
 source "$SCRIPT_DIR/checker"
 
-LOG_FILE="install_nvim-$(date +%F).log"
+# Create a global temp directory for logs and other shared resources
+INSTALL_TEMP_DIR=$(create_temp_dir "nvim_install")
+LOG_FILE="$INSTALL_TEMP_DIR/install_nvim-$(date +%F).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
+
+# Cleanup function to ensure temp directory is removed on exit
+cleanup() {
+    local exit_code=$?
+
+    # Keep log file only if there was an error
+    if [ $exit_code -eq 0 ]; then
+        log "Installation completed successfully, cleaning up temporary files"
+    else
+        # Copy log to home directory for troubleshooting if there was an error
+        local backup_log="$HOME/nvim_install_error-$(date +%F-%H%M%S).log"
+        cp "$LOG_FILE" "$backup_log"
+        log_warning "Installation encountered an error, log saved to $backup_log"
+    fi
+
+    # Clean up the temp directory
+    cleanup_temp_dir "$INSTALL_TEMP_DIR"
+
+    exit $exit_code
+}
+
+# Register cleanup function to run on script exit
+trap cleanup EXIT
 
 # Parse optional argument
 PACKAGE_MODE=install
@@ -37,18 +62,12 @@ check_sudo
 
 # Set variables
 NVIM_REPO="https://github.com/neovim/neovim.git"
-NVIM_DIR="$(pwd)/neovim"
+NVIM_DIR="$INSTALL_TEMP_DIR/neovim"
 
-# Clone or update neovim repo
-if [ -d "$NVIM_DIR" ]; then
-    log_progress "Updating existing Neovim repository"
-    cd "$NVIM_DIR"
-    git pull
-else
-    log_progress "Cloning Neovim repository"
-    git clone "$NVIM_REPO" "$NVIM_DIR"
-    cd "$NVIM_DIR"
-fi
+# Clone or update neovim repo in our temporary directory
+log_progress "Cloning Neovim repository to temporary directory"
+git clone --depth 1 "$NVIM_REPO" "$NVIM_DIR"
+cd "$NVIM_DIR"
 
 # Build neovim
 section_header "Building Neovim"
@@ -61,8 +80,7 @@ if [ "$PACKAGE_MODE" = "targz" ]; then
 
     log_progress "Creating packaging directory structure"
     # Create staging directory for installation
-    STAGING_DIR="$(pwd)/release_staging"
-    rm -rf "$STAGING_DIR"
+    STAGING_DIR="$NVIM_DIR/release_staging"
     mkdir -p "$STAGING_DIR"
 
     log_progress "Installing to staging directory..."
@@ -71,8 +89,7 @@ if [ "$PACKAGE_MODE" = "targz" ]; then
 
     log_progress "Setting up package structure"
     # Create package directory with desired top-level folder structure
-    PKG_DIR="$(pwd)/nvim-linux-$ARCH"
-    rm -rf "$PKG_DIR"
+    PKG_DIR="$NVIM_DIR/nvim-linux-$ARCH"
     mkdir -p "$PKG_DIR"
 
     # Move installed files so that they appear under nvim-linux-arm64/
@@ -81,14 +98,15 @@ if [ "$PACKAGE_MODE" = "targz" ]; then
     log_progress "Extracting version information"
     # Extract version from the built nvim binary
     NVIM_VERSION=$("$PKG_DIR/bin/nvim" --version | head -n 1 | awk '{print $2}')
-    TAR_NAME="nvim_release_${NVIM_VERSION}.tar.gz"
+    TAR_NAME="nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz"
+    TAR_PATH="$HOME/$TAR_NAME"
 
     log_progress "Creating tarball: $TAR_NAME"
     # Create tar.gz with top-level folder nvim-linux-arm64 and the version included
-    tar -czvf "$TAR_NAME" -C "$(pwd)" "nvim-linux-$ARCH"
+    tar -czvf "$TAR_PATH" -C "$NVIM_DIR" "nvim-linux-$ARCH"
 
     log_success "Packaged Neovim as ${TAR_NAME}"
-    echo "${SUCCESS_ICON} Package created at: $(pwd)/${TAR_NAME}"
+    echo "${SUCCESS_ICON} Package created at: $TAR_PATH"
 else
     section_header "Installing Neovim"
 
@@ -101,11 +119,3 @@ fi
 
 section_header "Process Complete"
 log_complete "Neovim build process completed successfully!"
-
-# Remove log file if successful
-if [ $? -eq 0 ]; then
-    rm -f "$LOG_FILE"
-    log "Log file removed (successful installation)"
-else
-    log_warning "Script did not complete successfully; log file retained at $LOG_FILE"
-fi
