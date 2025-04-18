@@ -96,9 +96,10 @@ install_command "helm" "curl -LO \"https://get.helm.sh/helm-v${HELM_VERSION}-lin
 log_progress "Installing helmfile..."
 install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz\" && tar -xzf helmfile_${HELMFILE_VERSION}_linux_${HELMFILE_PLATFORM}.tar.gz && \$SUDO install -D helmfile /usr/local/bin/helmfile" "helmfile"
 
-# Install Helm diff plugin
+# Install Helm plugins
 log_progress "Installing Helm plugins..."
 install_command "helm-diff" "helm plugin install https://github.com/databus23/helm-diff" "helm plugin list | grep -q diff"
+install_command "helm-secrets" "helm plugin install https://github.com/jkroepke/helm-secrets" "helm plugin list | grep -q secrets"
 
 section_header "Configuring K9s Theme"
 
