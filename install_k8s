@@ -98,8 +98,8 @@ install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/rele
 
 # Install Helm plugins
 log_progress "Installing Helm plugins..."
-install_command "helm-diff" "helm plugin install https://github.com/databus23/helm-diff" "helm plugin list | grep -q diff"
-install_command "helm-secrets" "helm plugin install https://github.com/jkroepke/helm-secrets" "helm plugin list | grep -q secrets"
+install_command "helm-diff" "helm plugin install https://github.com/databus23/helm-diff" "helm diff" "" true
+install_command "helm-secrets" "helm plugin install https://github.com/jkroepke/helm-secrets" "helm secrets" "" true
 
 section_header "Configuring K9s Theme"
 

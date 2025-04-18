@@ -91,8 +91,13 @@ install_command() {
     local install_cmd=$2
     local check_cmd=$3
     local check_path=$4
+    local force=${5:-false}
     log_install "Installing $name."
-    if [ -n "$check_path" ] && [ -x "$check_path" ]; then
+    if [ "$force" = "true" ] || [ "$force" = "1" ]; then
+        log_install "Forcing installation of $name."
+        run_in_temp_dir "$name" "$install_cmd" || error_exit "Failed to install $name."
+        log_install "$name installed successfully."
+    elif [ -n "$check_path" ] && [ -x "$check_path" ]; then
         log_install "$name is already installed at $check_path."
     elif ! command -v $check_cmd &> /dev/null; then
         run_in_temp_dir "$name" "$install_cmd" || error_exit "Failed to install $name."
