@@ -21,16 +21,35 @@ check_architecture() {
 # Check if sudo is available and set SUDO variable accordingly
 check_sudo() {
     if command -v sudo &> /dev/null; then
-        SUDO="sudo"
         log_progress "Sudo is available and will be used for privileged operations"
+        SUDO="sudo"
     else
-        SUDO=""
         log_warning "Sudo is not available. Running with current user privileges."
         log_warning "Some operations may fail if they require elevated permissions."
+        SUDO=""
     fi
 
-    # Export SUDO for use in other scripts
+    # Export the SUDO variable
     export SUDO
+}
+
+# Function to create a sudo wrapper that works correctly
+setup_sudo_wrapper() {
+    # Create a global sudo wrapper function
+    # When sudo is available, this calls the real sudo
+    # When sudo is not available, it just runs the command directly
+    if [ -n "$SUDO" ]; then
+        sudo() {
+            command sudo "$@"
+        }
+    else
+        sudo() {
+            "$@"
+        }
+    fi
+
+    # Export the sudo function for subshells
+    export -f sudo
 }
 
 # Check for minimum system requirements
