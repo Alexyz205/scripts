@@ -66,7 +66,7 @@ check_dependency "tar"
 check_dependency "git"
 
 # Define versions.
-STARSHIP_VERSION="1.22.1"
+STARSHIP_VERSION="1.23.0"
 TMUX_VERSION="3.5"
 ZOXIDE_VERSION="0.9.7"
 FZF_VERSION="0.60.0"
@@ -93,18 +93,22 @@ echo " - node:      v${NODE_VERSION}"
 
 # Set platforms based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
+  STARSHIP_PLATFORM="${ARCH}-unknown-linux-musl"
   RG_PLATFORM="${ARCH}-unknown-linux-gnu"
   LAZYGIT_PLATFORM="Linux_arm64"
   DIRENV_PLATFORM="linux-arm64"
   NODE_PLATFORM="linux-arm64"
   ZOXIDE_PLATFORM="aarch64-unknown-linux-musl"
+  FZF_PLATFORM="arm64"
   log "Detected ARM64 architecture"
 else
+  STARSHIP_PLATFORM="${ARCH}-unknown-linux-musl"
   RG_PLATFORM="${ARCH}-unknown-linux-musl"
   LAZYGIT_PLATFORM="Linux_x86_64"
   DIRENV_PLATFORM="linux-amd64"
   NODE_PLATFORM="linux-x64"
   ZOXIDE_PLATFORM="x86_64-unknown-linux-musl"
+  FZF_PLATFORM="amd64"
   log "Detected x86_64 architecture"
 fi
 
@@ -115,24 +119,23 @@ section_header "Installing Tools"
 # Each command represents a use case that will be executed in its own temp directory
 
 log_progress "Installing starship prompt..."
-install_command "starship" "curl -k -sS https://starship.rs/install.sh | $SUDO sh -s -- --yes --version v${STARSHIP_VERSION}" "starship"
+install_command "starship" "curl -k -L \"https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${ARCH}-unknown-linux-musl.tar.gz\" -o starship.tar.gz && \
+  tar -xzf starship.tar.gz && \
+  $SUDO install starship -D -t /usr/local/bin/" "starship"
 
 log_progress "Installing tmux terminal multiplexer..."
 install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux"
 
 log_progress "Installing zoxide directory navigator..."
-install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ZOXIDE_PLATFORM}.tar.gz\" -o zoxide.tar.gz && \
+install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-unknown-linux-musl.tar.gz\" -o zoxide.tar.gz && \
   tar -xzf zoxide.tar.gz && \
   $SUDO cp zoxide /usr/local/bin/ && \
   $SUDO chmod +x /usr/local/bin/zoxide" "zoxide"
 
 log_progress "Installing fzf fuzzy finder..."
-# FZF is a special case as it installs to ~/.fzf
-if [ ! -d "$HOME/.fzf" ]; then
-    run_in_temp_dir "fzf" "git clone --branch v${FZF_VERSION} --depth 1 https://github.com/junegunn/fzf.git $HOME/.fzf && $HOME/.fzf/install --all"
-else
-    log_install "fzf is already installed at $HOME/.fzf"
-fi
+install_command "fzf" "curl -k -LO \"https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${FZF_PLATFORM}.tar.gz\" && \
+  tar -xzf fzf-${FZF_VERSION}-linux_${FZF_PLATFORM}.tar.gz && \
+  $SUDO install fzf -D -t /usr/local/bin/" "fzf"
 
 log_progress "Installing ripgrep search tool..."
 install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && \
