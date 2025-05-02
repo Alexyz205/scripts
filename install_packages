@@ -52,6 +52,7 @@ if [[ "$1" == "--help" ]]; then
     echo " - eza        - Modern ls alternative"
     echo " - nvim       - Neovim text editor"
     echo " - node       - JavaScript runtime"
+    echo " - carapace   - Command line completions"
     exit 0
 fi
 
@@ -77,6 +78,7 @@ NVIM_VERSION="0.10.4"
 DIRENV_VERSION="2.35.0"
 EZA_VERSION="0.20.21"
 NODE_VERSION="22.14.0"
+CARAPACE_VERSION="1.3.0"
 
 log "Using the following versions:"
 echo " - starship:  v${STARSHIP_VERSION}"
@@ -90,6 +92,7 @@ echo " - nvim:      v${NVIM_VERSION}"
 echo " - direnv:    v${DIRENV_VERSION}"
 echo " - eza:       v${EZA_VERSION}"
 echo " - node:      v${NODE_VERSION}"
+echo " - carapace:  v${CARAPACE_VERSION}"
 
 # Set platforms based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
@@ -100,6 +103,7 @@ if [ "$ARCH" = "aarch64" ]; then
   NODE_PLATFORM="linux-arm64"
   ZOXIDE_PLATFORM="aarch64-unknown-linux-musl"
   FZF_PLATFORM="arm64"
+  CARAPACE_PLATFORM="linux_arm64"
   log "Detected ARM64 architecture"
 else
   STARSHIP_PLATFORM="${ARCH}-unknown-linux-musl"
@@ -109,6 +113,7 @@ else
   NODE_PLATFORM="linux-x64"
   ZOXIDE_PLATFORM="x86_64-unknown-linux-musl"
   FZF_PLATFORM="amd64"
+  CARAPACE_PLATFORM="linux_amd64"
   log "Detected x86_64 architecture"
 fi
 
@@ -171,6 +176,11 @@ install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/n
   tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && \
   $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/" "node"
 
+log_progress "Installing carapace command completion..."
+install_command "carapace" "curl -k -LO \"https://github.com/carapace-sh/carapace-bin/releases/download/v${CARAPACE_VERSION}/carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz\" && \
+  tar -xzf carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz && \
+  $SUDO install carapace -D -t /usr/local/bin/" "carapace"
+
 section_header "Installation Summary"
 log_complete "All tools have been successfully installed!"
 echo
@@ -186,5 +196,6 @@ echo "  - direnv    - Environment switcher"
 echo "  - eza       - Modern ls alternative"
 echo "  - nvim      - Neovim text editor"
 echo "  - node      - JavaScript runtime"
+echo "  - carapace  - Command line completions"
 echo
 echo "Run --help for more information about each tool."
