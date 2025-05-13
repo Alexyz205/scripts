@@ -75,7 +75,7 @@ FZF_VERSION="0.60.0"
 RG_VERSION="14.1.0"
 FD_VERSION="10.2.0"
 LAZYGIT_VERSION="0.45.2"
-NVIM_VERSION="0.10.4"
+NVIM_VERSION="0.11.1"
 DIRENV_VERSION="2.35.0"
 EZA_VERSION="0.20.21"
 NODE_VERSION="22.14.0"
@@ -108,6 +108,7 @@ if [ "$ARCH" = "aarch64" ]; then
   FZF_PLATFORM="arm64"
   CARAPACE_PLATFORM="linux_arm64"
   BAT_PLATFORM="aarch64-unknown-linux-musl"
+  NVIM_PLATFORM="arm64"
   log "Detected ARM64 architecture"
 else
   STARSHIP_PLATFORM="${ARCH}-unknown-linux-musl"
@@ -119,6 +120,7 @@ else
   FZF_PLATFORM="amd64"
   CARAPACE_PLATFORM="linux_amd64"
   BAT_PLATFORM="x86_64-unknown-linux-musl"
+  NVIM_PLATFORM="x86_64"
   log "Detected x86_64 architecture"
 fi
 
@@ -173,8 +175,9 @@ install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releas
   $SUDO install eza -D -t /usr/local/bin/" "eza"
 
 log_progress "Installing neovim editor..."
-install_command "nvim" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz\" && \
-  $SUDO tar -xzf nvim_release_${NVIM_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local" "nvim"
+install_command "nvim" "curl -k -LO \"https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-linux-${NVIM_PLATFORM}.tar.gz\" && \
+  tar -xzf nvim-linux-${NVIM_PLATFORM}.tar.gz && \
+  $SUDO cp -r nvim-linux-${NVIM_PLATFORM}/* /usr/local/" "nvim"
 
 log_progress "Installing node.js runtime..."
 install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz\" && \
