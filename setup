@@ -54,6 +54,7 @@ common_items=(
   "nvim:$XDG_CONFIG_HOME/nvim"
   "starship.toml:$XDG_CONFIG_HOME/starship.toml"
   "eza-theme-catppuccin.yml:$XDG_CONFIG_HOME/eza/theme.yml"
+  "lazygit-config.yml:$XDG_CONFIG_HOME/lazygit/config.yml"
   "shell/zsh:$XDG_CONFIG_HOME/zsh"
   "shell/zsh/.zprofile:$HOME/.zprofile"
   "shell/zsh/.zshrc:$HOME/.zshrc"
