@@ -43,6 +43,7 @@ fi
 common_directories=(
     $XDG_CONFIG_HOME
     $XDG_CONFIG_HOME/eza
+    $XDG_CONFIG_HOME/lazygit
 )
 
 # Define symlinks to create (source:target)
