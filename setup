@@ -44,6 +44,7 @@ common_directories=(
     $XDG_CONFIG_HOME
     $XDG_CONFIG_HOME/eza
     $XDG_CONFIG_HOME/lazygit
+    $XDG_CONFIG_HOME/yazi
 )
 
 # Define symlinks to create (source:target)
@@ -56,6 +57,7 @@ common_items=(
   "starship.toml:$XDG_CONFIG_HOME/starship.toml"
   "eza-theme-catppuccin.yml:$XDG_CONFIG_HOME/eza/theme.yml"
   "lazygit-config.yml:$XDG_CONFIG_HOME/lazygit/config.yml"
+  "yazi:$XDG_CONFIG_HOME/yazi"
   "shell/zsh:$XDG_CONFIG_HOME/zsh"
   "shell/zsh/.zprofile:$HOME/.zprofile"
   "shell/zsh/.zshrc:$HOME/.zshrc"

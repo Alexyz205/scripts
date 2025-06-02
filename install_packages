@@ -54,6 +54,7 @@ if [[ "$1" == "--help" ]]; then
     echo " - node       - JavaScript runtime"
     echo " - carapace   - Command line completions"
     echo " - bat        - Syntax highlighting pager"
+    echo " - yazi       - File manager"
     exit 0
 fi
 
@@ -81,6 +82,7 @@ EZA_VERSION="0.20.21"
 NODE_VERSION="22.14.0"
 CARAPACE_VERSION="1.3.0"
 BAT_VERSION="0.25.0"
+YAZI_VERSION="25.5.31"
 
 log "Using the following versions:"
 echo " - starship:  v${STARSHIP_VERSION}"
@@ -96,30 +98,28 @@ echo " - eza:       v${EZA_VERSION}"
 echo " - node:      v${NODE_VERSION}"
 echo " - carapace:  v${CARAPACE_VERSION}"
 echo " - bat:       v${BAT_VERSION}"
+echo " - yazi:      v${YAZI_VERSION}"
 
 # Set platforms based on architecture.
+# Standardized on GNU libc for consistency and compatibility
+GNU_SUFFIX="unknown-linux-gnu"
+
 if [ "$ARCH" = "aarch64" ]; then
-  STARSHIP_PLATFORM="${ARCH}-unknown-linux-musl"
-  RG_PLATFORM="${ARCH}-unknown-linux-gnu"
+  # ARM64-specific platforms
   LAZYGIT_PLATFORM="Linux_arm64"
   DIRENV_PLATFORM="linux-arm64"
   NODE_PLATFORM="linux-arm64"
-  ZOXIDE_PLATFORM="aarch64-unknown-linux-musl"
   FZF_PLATFORM="arm64"
   CARAPACE_PLATFORM="linux_arm64"
-  BAT_PLATFORM="aarch64-unknown-linux-musl"
   NVIM_PLATFORM="arm64"
   log "Detected ARM64 architecture"
 else
-  STARSHIP_PLATFORM="${ARCH}-unknown-linux-musl"
-  RG_PLATFORM="${ARCH}-unknown-linux-musl"
+  # x86_64-specific platforms
   LAZYGIT_PLATFORM="Linux_x86_64"
   DIRENV_PLATFORM="linux-amd64"
   NODE_PLATFORM="linux-x64"
-  ZOXIDE_PLATFORM="x86_64-unknown-linux-musl"
   FZF_PLATFORM="amd64"
   CARAPACE_PLATFORM="linux_amd64"
-  BAT_PLATFORM="x86_64-unknown-linux-musl"
   NVIM_PLATFORM="x86_64"
   log "Detected x86_64 architecture"
 fi
@@ -131,7 +131,7 @@ section_header "Installing Tools"
 # Each command represents a use case that will be executed in its own temp directory
 
 log_progress "Installing starship prompt..."
-install_command "starship" "curl -k -L \"https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${ARCH}-unknown-linux-musl.tar.gz\" -o starship.tar.gz && \
+install_command "starship" "curl -k -L \"https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${ARCH}-${GNU_SUFFIX}.tar.gz\" -o starship.tar.gz && \
   tar -xzf starship.tar.gz && \
   $SUDO install starship -D -t /usr/local/bin/" "starship"
 
@@ -139,7 +139,7 @@ install_command "starship" "curl -k -L \"https://github.com/starship/starship/re
 # install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux"
 
 log_progress "Installing zoxide directory navigator..."
-install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-unknown-linux-musl.tar.gz\" -o zoxide.tar.gz && \
+install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" -o zoxide.tar.gz && \
   tar -xzf zoxide.tar.gz && \
   $SUDO cp zoxide /usr/local/bin/ && \
   $SUDO chmod +x /usr/local/bin/zoxide" "zoxide"
@@ -150,14 +150,14 @@ install_command "fzf" "curl -k -LO \"https://github.com/junegunn/fzf/releases/do
   $SUDO install fzf -D -t /usr/local/bin/" "fzf"
 
 log_progress "Installing ripgrep search tool..."
-install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz\" && \
-  tar -xzf ripgrep-${RG_VERSION}-${RG_PLATFORM}.tar.gz && \
-  $SUDO install ripgrep-${RG_VERSION}-${RG_PLATFORM}/rg -D -t /usr/local/bin/" "rg"
+install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
+  tar -xzf ripgrep-${RG_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
+  $SUDO install ripgrep-${RG_VERSION}-${ARCH}-${GNU_SUFFIX}/rg -D -t /usr/local/bin/" "rg"
 
 log_progress "Installing fd file finder..."
-install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz\" && \
-  tar -xzf fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl.tar.gz && \
-  $SUDO install fd-v${FD_VERSION}-${ARCH}-unknown-linux-musl/fd -D -t /usr/local/bin/" "fd"
+install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
+  tar -xzf fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
+  $SUDO install fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}/fd -D -t /usr/local/bin/" "fd"
 
 log_progress "Installing lazygit Git UI..."
 install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && \
@@ -170,8 +170,8 @@ install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/release
   $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv"
 
 log_progress "Installing eza ls replacement..."
-install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-unknown-linux-gnu.tar.gz\" && \
-  tar -xzf eza_${ARCH}-unknown-linux-gnu.tar.gz && \
+install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
+  tar -xzf eza_${ARCH}-${GNU_SUFFIX}.tar.gz && \
   $SUDO install eza -D -t /usr/local/bin/" "eza"
 
 log_progress "Installing neovim editor..."
@@ -190,9 +190,14 @@ install_command "carapace" "curl -k -LO \"https://github.com/carapace-sh/carapac
   $SUDO install carapace -D -t /usr/local/bin/" "carapace"
 
 log_progress "Installing bat syntax highlighting pager..."
-install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${BAT_PLATFORM}.tar.gz\" && \
-  tar -xzf bat-v${BAT_VERSION}-${BAT_PLATFORM}.tar.gz && \
-  $SUDO install bat-v${BAT_VERSION}-${BAT_PLATFORM}/bat -D -t /usr/local/bin/" "bat"
+install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
+  tar -xzf bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
+  $SUDO install bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}/bat -D -t /usr/local/bin/" "bat"
+
+log_progress "Installing yazi file manager..."
+install_command "yazi" "curl -k -LO \"https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-${ARCH}-${GNU_SUFFIX}.zip\" && \
+  unzip yazi-${ARCH}-${GNU_SUFFIX}.zip && \
+  $SUDO install yazi-${ARCH}-${GNU_SUFFIX}/yazi -D -t /usr/local/bin/" "yazi"
 
 section_header "Installation Summary"
 log_complete "All tools have been successfully installed!"
@@ -211,5 +216,6 @@ echo "  - nvim      - Neovim text editor"
 echo "  - node      - JavaScript runtime"
 echo "  - carapace  - Command line completions"
 echo "  - bat       - Syntax highlighting pager"
+echo "  - yazi      - File manager"
 echo
 echo "Run --help for more information about each tool."
