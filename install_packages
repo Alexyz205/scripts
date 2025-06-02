@@ -71,7 +71,7 @@ check_dependency "git"
 # Define versions.
 STARSHIP_VERSION="1.23.0"
 TMUX_VERSION="3.5"
-ZOXIDE_VERSION="0.9.7"
+ZOXIDE_VERSION="0.9.8"
 FZF_VERSION="0.60.0"
 RG_VERSION="14.1.0"
 FD_VERSION="10.2.0"
@@ -103,6 +103,7 @@ echo " - yazi:      v${YAZI_VERSION}"
 # Set platforms based on architecture.
 # Standardized on GNU libc for consistency and compatibility
 GNU_SUFFIX="unknown-linux-gnu"
+MUSL_SUFFIX="unknown-linux-musl"
 
 if [ "$ARCH" = "aarch64" ]; then
   # ARM64-specific platforms
@@ -131,7 +132,7 @@ section_header "Installing Tools"
 # Each command represents a use case that will be executed in its own temp directory
 
 log_progress "Installing starship prompt..."
-install_command "starship" "curl -k -L \"https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${ARCH}-${GNU_SUFFIX}.tar.gz\" -o starship.tar.gz && \
+install_command "starship" "curl -k -L \"https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${ARCH}-${MUSL_SUFFIX}.tar.gz\" -o starship.tar.gz && \
   tar -xzf starship.tar.gz && \
   $SUDO install starship -D -t /usr/local/bin/" "starship"
 
@@ -139,7 +140,7 @@ install_command "starship" "curl -k -L \"https://github.com/starship/starship/re
 # install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux"
 
 log_progress "Installing zoxide directory navigator..."
-install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" -o zoxide.tar.gz && \
+install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz\" -o zoxide.tar.gz && \
   tar -xzf zoxide.tar.gz && \
   $SUDO cp zoxide /usr/local/bin/ && \
   $SUDO chmod +x /usr/local/bin/zoxide" "zoxide"
