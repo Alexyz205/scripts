@@ -72,7 +72,7 @@ check_dependency "git"
 STARSHIP_VERSION="1.23.0"
 TMUX_VERSION="3.5"
 ZOXIDE_VERSION="0.9.8"
-FZF_VERSION="0.60.0"
+FZF_VERSION="0.62.0"
 RG_VERSION="14.1.0"
 FD_VERSION="10.2.0"
 LAZYGIT_VERSION="0.45.2"
@@ -196,9 +196,9 @@ install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/dow
   $SUDO install bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}/bat -D -t /usr/local/bin/" "bat"
 
 log_progress "Installing yazi file manager..."
-install_command "yazi" "curl -k -LO \"https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-${ARCH}-${GNU_SUFFIX}.zip\" && \
-  unzip yazi-${ARCH}-${GNU_SUFFIX}.zip && \
-  $SUDO install yazi-${ARCH}-${GNU_SUFFIX}/yazi -D -t /usr/local/bin/" "yazi"
+install_command "yazi" "curl -k -LO \"https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-${ARCH}-${MUSL_SUFFIX}.zip\" && \
+  unzip yazi-${ARCH}-${MUSL_SUFFIX}.zip && \
+  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/yazi -D -t /usr/local/bin/" "yazi"
 
 section_header "Installation Summary"
 log_complete "All tools have been successfully installed!"
