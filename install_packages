@@ -198,7 +198,8 @@ install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/dow
 log_progress "Installing yazi file manager..."
 install_command "yazi" "curl -k -LO \"https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-${ARCH}-${MUSL_SUFFIX}.zip\" && \
   unzip yazi-${ARCH}-${MUSL_SUFFIX}.zip && \
-  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/yazi -D -t /usr/local/bin/" "yazi"
+  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/yazi -D -t /usr/local/bin/ && \
+  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/ya -D -t /usr/local/bin/" "yazi"
 
 section_header "Installation Summary"
 log_complete "All tools have been successfully installed!"
