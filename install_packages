@@ -34,11 +34,45 @@ cleanup() {
 # Register cleanup function to run on script exit
 trap cleanup EXIT
 
+# Parse command line arguments
+FORCE_INSTALL=false
+
+for arg in "$@"; do
+    case $arg in
+        --force)
+            FORCE_INSTALL=true
+            shift
+            ;;
+        --help)
+            section_header "Package Installation Help"
+            echo "Usage: install_packages [--help] [--force]"
+            echo "This script installs various tools and utilities commonly used in development environments."
+            echo
+            echo "Options:"
+            echo "  --help    Show this help message and exit"
+            echo "  --force   Force reinstallation of all packages, even if already installed"
+            echo
+            ;;
+        *)
+            # Unknown option
+            if [[ "$arg" != "" ]]; then
+                log_error "Unknown option: $arg"
+                echo "Use --help for usage information."
+                exit 1
+            fi
+            ;;
+    esac
+done
+
 # Help option
-if [[ "$1" == "--help" ]]; then
+if [[ "$*" == *"--help"* ]]; then
     section_header "Package Installation Help"
-    echo "Usage: install_packages [--help]"
+    echo "Usage: install_packages [--help] [--force]"
     echo "This script installs various tools and utilities commonly used in development environments."
+    echo
+    echo "Options:"
+    echo "  --help    Show this help message and exit"
+    echo "  --force   Force reinstallation of all packages, even if already installed"
     echo
     echo "Tools that will be installed:"
     echo " - starship   - Cross-shell prompt"
@@ -60,6 +94,10 @@ fi
 
 section_header "Development Tools Installation"
 
+if [ "$FORCE_INSTALL" = true ]; then
+    log_warning "Force mode enabled - all packages will be reinstalled"
+fi
+
 log_progress "Checking system prerequisites"
 check_architecture
 check_sudo
@@ -72,15 +110,15 @@ check_dependency "git"
 STARSHIP_VERSION="1.23.0"
 TMUX_VERSION="3.5"
 ZOXIDE_VERSION="0.9.8"
-FZF_VERSION="0.62.0"
-RG_VERSION="14.1.0"
+FZF_VERSION="0.64.0"
+RG_VERSION="14.1.1"
 FD_VERSION="10.2.0"
-LAZYGIT_VERSION="0.51.1"
-NVIM_VERSION="0.11.1"
-DIRENV_VERSION="2.35.0"
-EZA_VERSION="0.20.21"
+LAZYGIT_VERSION="0.53.0"
+NVIM_VERSION="0.11.2"
+DIRENV_VERSION="2.36.0"
+EZA_VERSION="0.22.0"
 NODE_VERSION="22.14.0"
-CARAPACE_VERSION="1.3.0"
+CARAPACE_VERSION="1.8.6"
 BAT_VERSION="0.25.0"
 YAZI_VERSION="25.5.31"
 
@@ -134,75 +172,79 @@ section_header "Installing Tools"
 log_progress "Installing starship prompt..."
 install_command "starship" "curl -k -L \"https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${ARCH}-${MUSL_SUFFIX}.tar.gz\" -o starship.tar.gz && \
   tar -xzf starship.tar.gz && \
-  $SUDO install starship -D -t /usr/local/bin/" "starship"
+  $SUDO install starship -D -t /usr/local/bin/" "starship" "" "$FORCE_INSTALL"
 
-# log_progress "Installing tmux terminal multiplexer..."
-# install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux"
+log_progress "Installing tmux terminal multiplexer..."
+install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux" "" "$FORCE_INSTALL"
 
 log_progress "Installing zoxide directory navigator..."
 install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz\" -o zoxide.tar.gz && \
   tar -xzf zoxide.tar.gz && \
   $SUDO cp zoxide /usr/local/bin/ && \
-  $SUDO chmod +x /usr/local/bin/zoxide" "zoxide"
+  $SUDO chmod +x /usr/local/bin/zoxide" "zoxide" "" "$FORCE_INSTALL"
 
 log_progress "Installing fzf fuzzy finder..."
 install_command "fzf" "curl -k -LO \"https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${FZF_PLATFORM}.tar.gz\" && \
   tar -xzf fzf-${FZF_VERSION}-linux_${FZF_PLATFORM}.tar.gz && \
-  $SUDO install fzf -D -t /usr/local/bin/" "fzf"
+  $SUDO install fzf -D -t /usr/local/bin/" "fzf" "" "$FORCE_INSTALL"
 
 log_progress "Installing ripgrep search tool..."
-install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
-  tar -xzf ripgrep-${RG_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
-  $SUDO install ripgrep-${RG_VERSION}-${ARCH}-${GNU_SUFFIX}/rg -D -t /usr/local/bin/" "rg"
+install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz\" && \
+  tar -xzf ripgrep-${RG_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz && \
+  $SUDO install ripgrep-${RG_VERSION}-${ARCH}-${MUSL_SUFFIX}/rg -D -t /usr/local/bin/" "rg" "" "$FORCE_INSTALL"
 
 log_progress "Installing fd file finder..."
 install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
   tar -xzf fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
-  $SUDO install fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}/fd -D -t /usr/local/bin/" "fd"
+  $SUDO install fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}/fd -D -t /usr/local/bin/" "fd" "" "$FORCE_INSTALL"
 
 log_progress "Installing lazygit Git UI..."
 install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && \
   tar -xzf lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz && \
-  $SUDO install lazygit -D -t /usr/local/bin/" "lazygit"
+  $SUDO install lazygit -D -t /usr/local/bin/" "lazygit" "" "$FORCE_INSTALL"
 
 log_progress "Installing direnv environment manager..."
 install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.${DIRENV_PLATFORM}\" && \
   chmod +x direnv.${DIRENV_PLATFORM} && \
-  $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv"
+  $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv" "" "$FORCE_INSTALL"
 
 log_progress "Installing eza ls replacement..."
 install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
   tar -xzf eza_${ARCH}-${GNU_SUFFIX}.tar.gz && \
-  $SUDO install eza -D -t /usr/local/bin/" "eza"
+  $SUDO install eza -D -t /usr/local/bin/" "eza" "" "$FORCE_INSTALL"
 
 log_progress "Installing neovim editor..."
 install_command "nvim" "curl -k -LO \"https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-linux-${NVIM_PLATFORM}.tar.gz\" && \
   tar -xzf nvim-linux-${NVIM_PLATFORM}.tar.gz && \
-  $SUDO cp -r nvim-linux-${NVIM_PLATFORM}/* /usr/local/" "nvim"
+  $SUDO cp -r nvim-linux-${NVIM_PLATFORM}/* /usr/local/" "nvim" "" "$FORCE_INSTALL"
 
 log_progress "Installing node.js runtime..."
 install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz\" && \
   tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && \
-  $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/" "node"
+  $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/" "node" "" "$FORCE_INSTALL"
 
-log_progress "Installing carapace command completion..."
-install_command "carapace" "curl -k -LO \"https://github.com/carapace-sh/carapace-bin/releases/download/v${CARAPACE_VERSION}/carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz\" && \
-  tar -xzf carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz && \
-  $SUDO install carapace -D -t /usr/local/bin/" "carapace"
+# log_progress "Installing carapace command completion..."
+# install_command "carapace" "curl -k -LO \"https://github.com/carapace-sh/carapace-bin/releases/download/v${CARAPACE_VERSION}/carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz\" && \
+#   tar -xzf carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz && \
+#   $SUDO install carapace -D -t /usr/local/bin/" "carapace" "" "$FORCE_INSTALL"
 
 log_progress "Installing bat syntax highlighting pager..."
 install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
   tar -xzf bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
-  $SUDO install bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}/bat -D -t /usr/local/bin/" "bat"
+  $SUDO install bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}/bat -D -t /usr/local/bin/" "bat" "" "$FORCE_INSTALL"
 
 log_progress "Installing yazi file manager..."
 install_command "yazi" "curl -k -LO \"https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-${ARCH}-${MUSL_SUFFIX}.zip\" && \
   unzip yazi-${ARCH}-${MUSL_SUFFIX}.zip && \
   $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/yazi -D -t /usr/local/bin/ && \
-  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/ya -D -t /usr/local/bin/" "yazi"
+  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/ya -D -t /usr/local/bin/" "yazi" "" "$FORCE_INSTALL"
 
 section_header "Installation Summary"
-log_complete "All tools have been successfully installed!"
+if [ "$FORCE_INSTALL" = true ]; then
+    log_complete "All tools have been successfully reinstalled/updated!"
+else
+    log_complete "All tools have been successfully installed!"
+fi
 echo
 echo "Tools installed:"
 echo "  - starship  - Cross-shell prompt"
@@ -220,4 +262,8 @@ echo "  - carapace  - Command line completions"
 echo "  - bat       - Syntax highlighting pager"
 echo "  - yazi      - File manager"
 echo
+if [ "$FORCE_INSTALL" = true ]; then
+    echo "All packages were reinstalled using --force mode."
+    echo
+fi
 echo "Run --help for more information about each tool."
