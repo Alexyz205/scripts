@@ -118,7 +118,7 @@ NVIM_VERSION="0.11.2"
 DIRENV_VERSION="2.36.0"
 EZA_VERSION="0.22.0"
 NODE_VERSION="22.14.0"
-CARAPACE_VERSION="1.8.6"
+CARAPACE_VERSION="1.4.1"
 BAT_VERSION="0.25.0"
 YAZI_VERSION="25.5.31"
 
@@ -223,10 +223,10 @@ install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/n
   tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && \
   $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/" "node" "" "$FORCE_INSTALL"
 
-# log_progress "Installing carapace command completion..."
-# install_command "carapace" "curl -k -LO \"https://github.com/carapace-sh/carapace-bin/releases/download/v${CARAPACE_VERSION}/carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz\" && \
-#   tar -xzf carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz && \
-#   $SUDO install carapace -D -t /usr/local/bin/" "carapace" "" "$FORCE_INSTALL"
+log_progress "Installing carapace command completion..."
+install_command "carapace" "curl -k -LO \"https://github.com/carapace-sh/carapace-bin/releases/download/v${CARAPACE_VERSION}/carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz\" && \
+  tar -xzf carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz && \
+  $SUDO install carapace -D -t /usr/local/bin/" "carapace" "" "$FORCE_INSTALL"
 
 log_progress "Installing bat syntax highlighting pager..."
 install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
