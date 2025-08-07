@@ -90,11 +90,12 @@ common_directories=(
 
 # Define symlinks to create (source:target)
 common_items=(
-  "config/ghostty:$XDG_CONFIG_HOME/ghostty"
+  "nvim:$XDG_CONFIG_HOME/nvim"
+  "config/ghostty/config:$XDG_CONFIG_HOME/ghostty/config"
   "config/nix:$XDG_CONFIG_HOME/nix"
+  "config/tmux/.tmux:$HOME/.tmux"
   "config/tmux/.tmux.conf:$HOME/.tmux.conf"
   "config/git/config:$HOME/.gitconfig"
-  "nvim:$XDG_CONFIG_HOME/nvim"
   "config/starship/starship.toml:$XDG_CONFIG_HOME/starship.toml"
   "config/eza/theme.yml:$XDG_CONFIG_HOME/eza/theme.yml"
   "config/lazygit/config.yml:$XDG_CONFIG_HOME/lazygit/config.yml"
