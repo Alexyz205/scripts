@@ -1,7 +1,15 @@
 #!/bin/bash
-set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+
+# Initialize error handling
+if [ -f "$SCRIPT_DIR/error_handling" ]; then
+    source "$SCRIPT_DIR/error_handling"
+    init_error_handling "install_k8s"
+else
+    set -euo pipefail
+fi
+
 source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/utils"
 source "$SCRIPT_DIR/checker"
@@ -58,11 +66,58 @@ check_dependency tar
 check_architecture
 check_sudo
 
-# Define versions.
-KUBECTL_VERSION="1.32.2"
-K9S_VERSION="0.50.3"
-HELM_VERSION="3.17.1"
-HELMFILE_VERSION="0.171.0"
+# Load versions from lock file
+DOTFILES_ROOT="$(dirname "$SCRIPT_DIR")"
+LOCK_FILE="$DOTFILES_ROOT/packages.lock.yml"
+
+# Parse YAML function (simple key-value parser)
+parse_yaml() {
+    local prefix=$2
+    local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+    sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+    awk -F$fs '{
+        indent = length($1)/2;
+        vname[indent] = $2;
+        for (i in vname) {if (i > indent) {delete vname[i]}}
+        if (length($3) > 0) {
+            vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+            printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+        }
+    }'
+}
+
+# Load versions from lock file - exit with error if file or versions are missing
+if [[ ! -f "$LOCK_FILE" ]]; then
+    log_error "Lock file not found: $LOCK_FILE"
+    log_error "Please ensure packages.lock.yml exists in the dotfiles root directory"
+    exit 1
+fi
+
+log_progress "Loading versions from lock file..."
+eval $(parse_yaml "$LOCK_FILE" "LOCK_")
+
+# Extract version numbers from lock file - exit with error if any are missing
+KUBECTL_VERSION="${LOCK_packages_k8s_tools_kubectl}"
+K9S_VERSION="${LOCK_packages_k8s_tools_k9s}"
+HELM_VERSION="${LOCK_packages_k8s_tools_helm}"
+HELMFILE_VERSION="${LOCK_packages_k8s_tools_helmfile}"
+
+# Validate that all required versions are present
+MISSING_PACKAGES=()
+[[ -z "$KUBECTL_VERSION" ]] && MISSING_PACKAGES+=("kubectl")
+[[ -z "$K9S_VERSION" ]] && MISSING_PACKAGES+=("k9s")
+[[ -z "$HELM_VERSION" ]] && MISSING_PACKAGES+=("helm")
+[[ -z "$HELMFILE_VERSION" ]] && MISSING_PACKAGES+=("helmfile")
+
+if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
+    log_error "Missing versions in lock file for k8s packages: ${MISSING_PACKAGES[*]}"
+    log_error "Please ensure all k8s package versions are defined in packages.lock.yml"
+    exit 1
+fi
+
+log_complete "Versions loaded from lock file"
 
 log "Using the following versions:"
 echo -e " ${INFO_ICON} kubectl:   ${BOLD}v${KUBECTL_VERSION}${RESET}"
