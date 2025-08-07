@@ -226,6 +226,13 @@ echo "    • yazi:       v${YAZI_VERSION}"
 GNU_SUFFIX="unknown-linux-gnu"
 MUSL_SUFFIX="unknown-linux-musl"
 
+# Set architecture-specific suffix for ripgrep
+if [ "$ARCH" = "aarch64" ]; then
+  RIPGREP_SUFFIX="unknown-linux-gnu"
+else
+  RIPGREP_SUFFIX="unknown-linux-musl"
+fi
+
 if [ "$ARCH" = "aarch64" ]; then
   # ARM64-specific platforms
   LAZYGIT_PLATFORM="Linux_arm64"
@@ -272,9 +279,9 @@ install_command "fzf" "curl -k -LO \"https://github.com/junegunn/fzf/releases/do
   $SUDO install fzf -D -t /usr/local/bin/" "fzf" "" "$FORCE_INSTALL"
 
 log_progress "Installing ripgrep search tool..."
-install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz\" && \
-  tar -xzf ripgrep-${RG_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz && \
-  $SUDO install ripgrep-${RG_VERSION}-${ARCH}-${MUSL_SUFFIX}/rg -D -t /usr/local/bin/" "rg" "" "$FORCE_INSTALL"
+install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${ARCH}-${RIPGREP_SUFFIX}.tar.gz\" && \
+  tar -xzf ripgrep-${RG_VERSION}-${ARCH}-${RIPGREP_SUFFIX}.tar.gz && \
+  $SUDO install ripgrep-${RG_VERSION}-${ARCH}-${RIPGREP_SUFFIX}/rg -D -t /usr/local/bin/" "rg" "" "$FORCE_INSTALL"
 
 log_progress "Installing fd file finder..."
 install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
