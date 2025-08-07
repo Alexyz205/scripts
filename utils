@@ -55,6 +55,34 @@ cleanup_temp_dir() {
     fi
 }
 
+# Extract and log URLs from curl commands
+log_download_urls() {
+    local command="$1"
+    
+    # Extract URLs from curl commands - handles both quoted and unquoted URLs
+    # Pattern 1: curl -k -L "URL" or curl -k -LO "URL"
+    # Pattern 2: curl -k -L URL or curl -k -LO URL
+    local urls_quoted urls_unquoted
+    
+    # Extract quoted URLs: curl ... "https://..."
+    urls_quoted=$(echo "$command" | grep -oE '"https?://[^"]*"' | tr -d '"' || true)
+    
+    # Extract unquoted URLs: curl ... https://... (but not inside quotes)
+    urls_unquoted=$(echo "$command" | sed 's/"[^"]*"//g' | grep -oE 'https?://[^[:space:]&|;]*' || true)
+    
+    # Combine both results
+    local all_urls
+    all_urls=$(printf '%s\n%s\n' "$urls_quoted" "$urls_unquoted" | grep -v '^[[:space:]]*$' || true)
+    
+    if [ -n "$all_urls" ]; then
+        while IFS= read -r url; do
+            if [ -n "$url" ]; then
+                log_progress "Download URL: $url"
+            fi
+        done <<< "$all_urls"
+    fi
+}
+
 # Execute a command in a temporary directory, with proper cleanup
 # Usage: run_in_temp_dir "package_name" "command to execute"
 run_in_temp_dir() {
@@ -79,6 +107,9 @@ run_in_temp_dir() {
         log_error "Failed to change to temporary directory: $temp_dir"
         return 1
     }
+
+    # Log download URLs before executing command
+    log_download_urls "$command"
 
     # Use eval to execute the command and capture its exit status
     eval "$command"
