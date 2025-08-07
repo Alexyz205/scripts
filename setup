@@ -52,6 +52,7 @@ common_directories=(
     $XDG_CONFIG_HOME
     $XDG_CONFIG_HOME/eza
     $XDG_CONFIG_HOME/lazygit
+    $XDG_CONFIG_HOME/lazydocker
     $XDG_CONFIG_HOME/yazi
 )
 
@@ -65,6 +66,7 @@ common_items=(
   "config/starship/starship.toml:$XDG_CONFIG_HOME/starship.toml"
   "config/eza/theme.yml:$XDG_CONFIG_HOME/eza/theme.yml"
   "config/lazygit/config.yml:$XDG_CONFIG_HOME/lazygit/config.yml"
+  "config/lazygit/config.yml:$XDG_CONFIG_HOME/lazydocker/config.yml"
   "config/yazi:$XDG_CONFIG_HOME/yazi"
   "shell/zsh:$XDG_CONFIG_HOME/zsh"
   "shell/zsh/.zprofile:$HOME/.zprofile"
