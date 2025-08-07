@@ -1,7 +1,15 @@
 #!/bin/bash
-set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+
+# Initialize error handling
+if [ -f "$SCRIPT_DIR/error_handling" ]; then
+    source "$SCRIPT_DIR/error_handling"
+    init_error_handling "install-packages"
+else
+    set -euo pipefail
+fi
+
 source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/utils"
 source "$SCRIPT_DIR/checker"
@@ -106,21 +114,78 @@ check_dependency "curl"
 check_dependency "tar"
 check_dependency "git"
 
-# Define versions.
-STARSHIP_VERSION="1.23.0"
-TMUX_VERSION="3.5"
-ZOXIDE_VERSION="0.9.8"
-FZF_VERSION="0.64.0"
-RG_VERSION="14.1.1"
-FD_VERSION="10.2.0"
-LAZYGIT_VERSION="0.53.0"
-NVIM_VERSION="0.11.2"
-DIRENV_VERSION="2.36.0"
-EZA_VERSION="0.22.0"
-NODE_VERSION="22.14.0"
-CARAPACE_VERSION="1.4.1"
-BAT_VERSION="0.25.0"
-YAZI_VERSION="25.5.31"
+# Load versions from lock file or use fallback versions
+DOTFILES_ROOT="$(dirname "$SCRIPT_DIR")"
+LOCK_FILE="$DOTFILES_ROOT/packages.lock.yml"
+
+# Parse YAML function (simple key-value parser)
+parse_yaml() {
+    local prefix=$2
+    local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+    sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+    awk -F$fs '{
+        indent = length($1)/2;
+        vname[indent] = $2;
+        for (i in vname) {if (i > indent) {delete vname[i]}}
+        if (length($3) > 0) {
+            vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+            printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+        }
+    }'
+}
+
+# Load versions from lock file - exit with error if file or versions are missing
+if [[ ! -f "$LOCK_FILE" ]]; then
+    log_error "Lock file not found: $LOCK_FILE"
+    log_error "Please ensure packages.lock.yml exists in the dotfiles root directory"
+    exit 1
+fi
+
+log_progress "Loading versions from lock file..."
+eval $(parse_yaml "$LOCK_FILE" "LOCK_")
+
+# Extract version numbers from lock file - exit with error if any are missing
+STARSHIP_VERSION="${LOCK_packages_cli_tools_starship}"
+TMUX_VERSION="${LOCK_packages_cli_tools_tmux}"
+ZOXIDE_VERSION="${LOCK_packages_cli_tools_zoxide}"
+FZF_VERSION="${LOCK_packages_cli_tools_fzf}"
+RG_VERSION="${LOCK_packages_cli_tools_ripgrep}"
+FD_VERSION="${LOCK_packages_cli_tools_fd}"
+LAZYGIT_VERSION="${LOCK_packages_cli_tools_lazygit}"
+NVIM_VERSION="${LOCK_packages_cli_tools_nvim}"
+DIRENV_VERSION="${LOCK_packages_cli_tools_direnv}"
+EZA_VERSION="${LOCK_packages_cli_tools_eza}"
+NODE_VERSION="${LOCK_packages_cli_tools_node}"
+CARAPACE_VERSION="${LOCK_packages_cli_tools_carapace}"
+BAT_VERSION="${LOCK_packages_cli_tools_bat}"
+YAZI_VERSION="${LOCK_packages_cli_tools_yazi}"
+
+# Validate that all required versions are present
+MISSING_PACKAGES=()
+[[ -z "$STARSHIP_VERSION" ]] && MISSING_PACKAGES+=("starship")
+[[ -z "$TMUX_VERSION" ]] && MISSING_PACKAGES+=("tmux")
+[[ -z "$ZOXIDE_VERSION" ]] && MISSING_PACKAGES+=("zoxide")
+[[ -z "$FZF_VERSION" ]] && MISSING_PACKAGES+=("fzf")
+[[ -z "$RG_VERSION" ]] && MISSING_PACKAGES+=("ripgrep")
+[[ -z "$FD_VERSION" ]] && MISSING_PACKAGES+=("fd")
+[[ -z "$LAZYGIT_VERSION" ]] && MISSING_PACKAGES+=("lazygit")
+[[ -z "$NVIM_VERSION" ]] && MISSING_PACKAGES+=("nvim")
+[[ -z "$DIRENV_VERSION" ]] && MISSING_PACKAGES+=("direnv")
+[[ -z "$EZA_VERSION" ]] && MISSING_PACKAGES+=("eza")
+[[ -z "$NODE_VERSION" ]] && MISSING_PACKAGES+=("node")
+[[ -z "$CARAPACE_VERSION" ]] && MISSING_PACKAGES+=("carapace")
+[[ -z "$BAT_VERSION" ]] && MISSING_PACKAGES+=("bat")
+[[ -z "$YAZI_VERSION" ]] && MISSING_PACKAGES+=("yazi")
+
+if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
+    log_error "Missing versions in lock file for packages: ${MISSING_PACKAGES[*]}"
+    log_error "Please ensure all package versions are defined in packages.lock.yml"
+    exit 1
+fi
+
+log_complete "Versions loaded from lock file"
 
 log "Using the following versions:"
 echo " - starship:  v${STARSHIP_VERSION}"
