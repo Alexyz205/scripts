@@ -8,7 +8,7 @@ source "$SCRIPT_DIR/utils"
 export XDG_CONFIG_HOME="$HOME/.config"
 
 # Process help option first
-if [[ "$1" == "--help" ]]; then
+if [[ "${1:-}" == "--help" ]]; then
     section_header "Dotfiles Setup"
     echo "Usage: setup [--help]"
     echo "This script creates necessary directories and symlinks for dotfiles configuration."
