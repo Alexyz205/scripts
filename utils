@@ -155,7 +155,12 @@ create_symlinks() {
 create_directories() {
     local directories=("$@")
     for dir in "${directories[@]}"; do
-        mkdir -p "$dir" || error_exit "Error creating directory $dir"
+        if [ -d "$dir" ]; then
+            log_progress "Directory already exists: $dir"
+        else
+            mkdir -p "$dir" || error_exit "Error creating directory $dir"
+            log_progress "Created directory: $dir"
+        fi
     done
     log_success "Created required directories"
 }
