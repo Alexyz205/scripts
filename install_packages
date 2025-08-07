@@ -1,4 +1,15 @@
 #!/bin/bash
+set -euo pipefail
+
+# ===============================================
+# Development Tools Package Installer
+# ===============================================
+# Installs various tools and utilities commonly used in development environments.
+# Uses a version lock file to ensure consistent installations across systems.
+#
+# Author: Alexis
+# Version: 2.0
+# Last Updated: 2025-08-07
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
@@ -106,13 +117,19 @@ if [ "$FORCE_INSTALL" = true ]; then
     log_warning "Force mode enabled - all packages will be reinstalled"
 fi
 
-log_progress "Checking system prerequisites"
+# ===============================================
+# System Validation
+# ===============================================
+
+log_progress "Validating system prerequisites"
+if ! validate_dependencies "curl" "tar" "git" "unzip"; then
+    error_exit "Missing critical dependencies for package installation"
+fi
+
 check_architecture
 check_sudo
 
-check_dependency "curl"
-check_dependency "tar"
-check_dependency "git"
+log_success "System validation completed successfully"
 
 # Load versions from lock file or use fallback versions
 DOTFILES_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -185,23 +202,24 @@ if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
     exit 1
 fi
 
-log_complete "Versions loaded from lock file"
+log_success "All package versions loaded from lock file"
 
-log "Using the following versions:"
-echo " - starship:  v${STARSHIP_VERSION}"
-echo " - tmux:      v${TMUX_VERSION}"
-echo " - zoxide:    v${ZOXIDE_VERSION}"
-echo " - fzf:       v${FZF_VERSION}"
-echo " - ripgrep:   v${RG_VERSION}"
-echo " - fd:        v${FD_VERSION}"
-echo " - lazygit:   v${LAZYGIT_VERSION}"
-echo " - nvim:      v${NVIM_VERSION}"
-echo " - direnv:    v${DIRENV_VERSION}"
-echo " - eza:       v${EZA_VERSION}"
-echo " - node:      v${NODE_VERSION}"
-echo " - carapace:  v${CARAPACE_VERSION}"
-echo " - bat:       v${BAT_VERSION}"
-echo " - yazi:      v${YAZI_VERSION}"
+log_progress "Package versions to be installed:"
+echo "  📦 CLI Tools:"
+echo "    • starship:   v${STARSHIP_VERSION}"
+echo "    • tmux:       v${TMUX_VERSION}"
+echo "    • zoxide:     v${ZOXIDE_VERSION}"
+echo "    • fzf:        v${FZF_VERSION}"
+echo "    • ripgrep:    v${RG_VERSION}"
+echo "    • fd:         v${FD_VERSION}"
+echo "    • lazygit:    v${LAZYGIT_VERSION}"
+echo "    • nvim:       v${NVIM_VERSION}"
+echo "    • direnv:     v${DIRENV_VERSION}"
+echo "    • eza:        v${EZA_VERSION}"
+echo "    • node:       v${NODE_VERSION}"
+echo "    • carapace:   v${CARAPACE_VERSION}"
+echo "    • bat:        v${BAT_VERSION}"
+echo "    • yazi:       v${YAZI_VERSION}"
 
 # Set platforms based on architecture.
 # Standardized on GNU libc for consistency and compatibility

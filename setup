@@ -1,4 +1,15 @@
 #!/bin/bash
+set -euo pipefail
+
+# ===============================================
+# Dotfiles Setup and Configuration
+# ===============================================
+# Creates necessary directories and symlinks for dotfiles configuration.
+# This script handles the core setup process for the dotfiles environment.
+#
+# Author: Alexis
+# Version: 2.0
+# Last Updated: 2025-08-07
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
@@ -28,6 +39,7 @@ if [[ "${1:-}" == "--help" ]]; then
     echo "  - ghostty       - Modern terminal emulator"
     echo "  - nix           - Nix package manager"
     echo "  - tmux          - Terminal multiplexer"
+    echo "  - git           - Git configuration"
     echo "  - nvim          - Neovim text editor"
     echo "  - starship      - Cross-shell prompt"
     echo "  - zsh           - Z shell configuration"
@@ -39,29 +51,49 @@ section_header "Dotfiles Setup"
 
 log "Configuration will be set up in $HOME and $XDG_CONFIG_HOME"
 
-# Get dotfiles directory
-if [ -z "$DOTFILES_DIR" ]; then
+# ===============================================
+# Environment Validation
+# ===============================================
+
+# Get and validate dotfiles directory
+if [ -z "${DOTFILES_DIR:-}" ]; then
     DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-    log_warning "DOTFILES_DIR wasn't set, using: $DOTFILES_DIR"
+    log_warning "DOTFILES_DIR not set, auto-detected: $DOTFILES_DIR"
 else
-    log "Using dotfiles directory: $DOTFILES_DIR"
+    log_progress "Using provided dotfiles directory: $DOTFILES_DIR"
 fi
+
+# Validate dotfiles directory exists and is accessible
+if [ ! -d "$DOTFILES_DIR" ]; then
+    error_exit "Dotfiles directory does not exist: $DOTFILES_DIR"
+fi
+
+if [ ! -r "$DOTFILES_DIR" ]; then
+    error_exit "Cannot read dotfiles directory: $DOTFILES_DIR"
+fi
+
+export DOTFILES_DIR
+log_success "Dotfiles directory validated: $DOTFILES_DIR"
+
+# ===============================================
+# Configuration Definitions
+# ===============================================
 
 # Define common directories to create
 common_directories=(
-    $XDG_CONFIG_HOME
-    $XDG_CONFIG_HOME/eza
-    $XDG_CONFIG_HOME/lazygit
-    $XDG_CONFIG_HOME/lazydocker
-    $XDG_CONFIG_HOME/yazi
+    "$XDG_CONFIG_HOME"
+    "$XDG_CONFIG_HOME/eza"
+    "$XDG_CONFIG_HOME/lazygit"
+    "$XDG_CONFIG_HOME/lazydocker"
+    "$XDG_CONFIG_HOME/yazi"
 )
 
 # Define symlinks to create (source:target)
 common_items=(
-  "ghostty:$XDG_CONFIG_HOME/ghostty"
-  "nix:$XDG_CONFIG_HOME/nix"
-  "tmux/.tmux.conf:$HOME/.tmux.conf"
-  "tmux/.tmux:$HOME/.tmux"
+  "config/ghostty:$XDG_CONFIG_HOME/ghostty"
+  "config/nix:$XDG_CONFIG_HOME/nix"
+  "config/tmux/.tmux.conf:$HOME/.tmux.conf"
+  "config/git/config:$HOME/.gitconfig"
   "nvim:$XDG_CONFIG_HOME/nvim"
   "config/starship/starship.toml:$XDG_CONFIG_HOME/starship.toml"
   "config/eza/theme.yml:$XDG_CONFIG_HOME/eza/theme.yml"
@@ -74,13 +106,21 @@ common_items=(
   "shell/bash/.bashrc:$HOME/.bashrc"
 )
 
+# ===============================================
+# Setup Execution
+# ===============================================
+
 log_progress "Creating required directories"
-create_directories "${common_directories[@]}"
+if ! create_directories "${common_directories[@]}"; then
+    error_exit "Failed to create required directories"
+fi
 
 section_header "Creating Symlinks"
 
 log_progress "Setting up configuration symlinks"
-create_symlinks "${common_items[@]}"
+if ! create_symlinks "${common_items[@]}"; then
+    error_exit "Failed to create required symlinks"
+fi
 
 section_header "Setup Complete"
 log_complete "Dotfiles have been successfully configured!"
@@ -88,6 +128,7 @@ echo
 echo "The following configurations have been set up:"
 echo "  - Shell       - ZSH and Bash configurations"
 echo "  - Terminal    - Ghostty terminal and tmux multiplexer"
+echo "  - Git         - Git configuration"
 echo "  - Editor      - Neovim configuration"
 echo "  - Prompt      - Starship cross-shell prompt"
 echo "  - Package Mgr - Nix configuration"

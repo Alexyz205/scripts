@@ -1,4 +1,15 @@
 #!/bin/bash
+set -euo pipefail
+
+# ===============================================
+# Neovim Builder and Installer
+# ===============================================
+# Builds Neovim from source and installs it on the system.
+# Can create distributable packages or install directly.
+#
+# Author: Alexis
+# Version: 2.0
+# Last Updated: 2025-08-07
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
@@ -42,9 +53,13 @@ cleanup() {
 # Register cleanup function to run on script exit
 trap cleanup EXIT
 
+# ===============================================
+# Command Line Processing
+# ===============================================
+
 # Parse optional argument
 PACKAGE_MODE=install
-if [ "$1" == "--help" ]; then
+if [ "${1:-}" == "--help" ]; then
     section_header "Neovim Build & Install"
     echo "Usage: install_nvim [--targz]"
     echo "This script builds Neovim from source and installs it on your system."
@@ -53,20 +68,29 @@ if [ "$1" == "--help" ]; then
     echo " ${INFO_ICON} --targz    - Create a distributable tar.gz package instead of installing"
     echo " ${INFO_ICON} --help     - Display this help message"
     exit 0
-elif [ "$1" == "--targz" ]; then
+elif [ "${1:-}" == "--targz" ]; then
     PACKAGE_MODE=targz
     log "Running in packaging mode (--targz)"
 fi
 
 section_header "Neovim Build Environment"
 
-# Check for dependencies
-log_progress "Checking and installing build dependencies..."
-check_and_install_dependencies curl tar git cmake ninja-build make
+# ===============================================
+# Build Environment Setup
+# ===============================================
 
-log_progress "Checking system architecture..."
+# Check for dependencies
+log_progress "Setting up build environment"
+log_progress "Installing build dependencies"
+if ! check_and_install_dependencies curl tar git cmake ninja-build make; then
+    error_exit "Failed to install required build dependencies"
+fi
+
+log_progress "Validating system configuration"
 check_architecture
 check_sudo
+
+log_success "Build environment ready"
 
 # Set variables
 NVIM_REPO="https://github.com/neovim/neovim.git"

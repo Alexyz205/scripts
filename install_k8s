@@ -1,4 +1,15 @@
 #!/bin/bash
+set -euo pipefail
+
+# ===============================================
+# Kubernetes Tools Installer
+# ===============================================
+# Installs kubectl, k9s, helm, helmfile, and configures themes.
+# Uses version lock file to ensure consistent tool versions.
+#
+# Author: Alexis
+# Version: 2.0
+# Last Updated: 2025-08-07
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
@@ -43,7 +54,7 @@ cleanup() {
 trap cleanup EXIT
 
 # Help option
-if [[ "$1" == "--help" ]]; then
+if [[ "${1:-}" == "--help" ]]; then
     section_header "Kubernetes Tools Installer"
     echo "Usage: install_k8s.sh [--help]"
     echo "This script installs kubectl, k9s, helm, helmfile, and configures the Catppuccin theme for k9s."
@@ -59,12 +70,20 @@ fi
 
 section_header "Kubernetes Tools Installation"
 
+# ===============================================
+# System Validation
+# ===============================================
+
 # Check prerequisites
-log_progress "Checking system prerequisites"
-check_dependency curl
-check_dependency tar
+log_progress "Validating system prerequisites"
+if ! validate_dependencies "curl" "tar"; then
+    error_exit "Missing critical dependencies for Kubernetes tools installation"
+fi
+
 check_architecture
 check_sudo
+
+log_success "System validation completed successfully"
 
 # Load versions from lock file
 DOTFILES_ROOT="$(dirname "$SCRIPT_DIR")"

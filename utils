@@ -1,11 +1,23 @@
 #!/bin/bash
+set -euo pipefail
+
+# ===============================================
+# Common Utility Functions
+# ===============================================
+# Provides shared utility functions for dotfiles scripts including
+# temporary directory management, dependency checking, and common operations.
+#
+# Author: Alexis
+# Version: 2.0
+# Last Updated: 2025-08-07
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 source "$SCRIPT_DIR/logs"
 source "$SCRIPT_DIR/checker"
 
-# Domain-level concept: Temp directory management with proper lifecycle
-# ---------------------------------------------------------------------
+# ===============================================
+# Temporary Directory Management
+# ===============================================
 
 # Create a unique temporary directory and return its path
 # Usage: TEMP_DIR=$(create_temp_dir "package_name")
@@ -82,85 +94,291 @@ run_in_temp_dir() {
     return $result
 }
 
+# ===============================================
+# Dependency Management
+# ===============================================
+
+# Check if a single dependency is available
 check_dependency() {
-    command -v "$1" &> /dev/null || { log_error "$1 is required but not installed."; exit 1; }
+    local cmd="$1"
+    if ! command -v "$cmd" &> /dev/null; then
+        log_error "Required dependency '$cmd' is not installed"
+        return 1
+    fi
+    return 0
 }
 
-install_command() {
-    local name=$1
-    local install_cmd=$2
-    local check_cmd=$3
-    local check_path=$4
-    local force=${5:-false}
-    log_install "Installing $name."
-    if [ "$force" = "true" ] || [ "$force" = "1" ]; then
-        log_install "Forcing installation of $name."
-        run_in_temp_dir "$name" "$install_cmd" || error_exit "Failed to install $name."
-        log_install "$name installed successfully."
-    elif [ -n "$check_path" ] && [ -x "$check_path" ]; then
-        log_install "$name is already installed at $check_path."
-    elif ! command -v $check_cmd &> /dev/null; then
-        run_in_temp_dir "$name" "$install_cmd" || error_exit "Failed to install $name."
-        log_install "$name installed successfully."
-    else
-        log_install "$name is already installed."
-    fi
-}
-
-check_and_install_dependencies() {
-    local dependencies=("$@")
-    if command -v apt-get &> /dev/null; then
-        PACKAGE_MANAGER="apt-get"
-    elif command -v brew &> /dev/null; then
-        PACKAGE_MANAGER="brew"
-    else
-        log_error "No supported package manager found. Please install required dependencies manually."
-        exit 1
-    fi
-
-    check_sudo
-
-    log_progress "Checking and installing missing dependencies..."
-    for dep in "${dependencies[@]}"; do
+# Validate multiple dependencies at once
+validate_dependencies() {
+    local deps=("$@")
+    local missing=()
+    
+    for dep in "${deps[@]}"; do
         if ! command -v "$dep" &> /dev/null; then
-            log_install "Installing $dep..."
-            if [ "$PACKAGE_MANAGER" = "apt-get" ]; then
-                $SUDO apt-get update && $SUDO apt-get install -y "$dep"
-            elif [ "$PACKAGE_MANAGER" = "brew" ]; then
-                brew install "$dep"
-            fi
-        else
-            log_install "$dep is already installed."
+            missing+=("$dep")
         fi
     done
+    
+    if [ ${#missing[@]} -gt 0 ]; then
+        log_error "Missing required dependencies: ${missing[*]}"
+        log_error "Please install these tools and try again"
+        return 1
+    fi
+    
+    log_progress "All dependencies validated: ${deps[*]}"
+    return 0
 }
 
+# ===============================================
+# Installation Management
+# ===============================================
+
+# Enhanced installation command with better logic and error handling
+install_command() {
+    local name="$1"
+    local install_cmd="$2"
+    local check_cmd="$3"
+    local check_path="${4:-}"
+    local force="${5:-false}"
+    
+    log_install "Processing installation for $name"
+    
+    # Force installation mode
+    if [ "$force" = "true" ] || [ "$force" = "1" ]; then
+        log_install "Force mode: reinstalling $name"
+        if run_in_temp_dir "$name" "$install_cmd"; then
+            log_success "$name installed successfully (forced)"
+            return 0
+        else
+            log_error "Failed to install $name (forced)"
+            return 1
+        fi
+    fi
+    
+    # Check if already installed via specific path
+    if [ -n "$check_path" ] && [ -x "$check_path" ]; then
+        log_install "$name is already installed at $check_path"
+        return 0
+    fi
+    
+    # Check if already installed via command availability
+    if [ -n "$check_cmd" ] && command -v "$check_cmd" &> /dev/null; then
+        log_install "$name is already installed (command: $check_cmd)"
+        return 0
+    fi
+    
+    # Perform installation
+    log_install "Installing $name"
+    if run_in_temp_dir "$name" "$install_cmd"; then
+        log_success "$name installed successfully"
+        return 0
+    else
+        log_error "Failed to install $name"
+        return 1
+    fi
+}
+
+# Enhanced package manager detection and dependency installation
+check_and_install_dependencies() {
+    local dependencies=("$@")
+    local package_manager=""
+    local install_cmd=""
+    local update_cmd=""
+    
+    # Detect package manager
+    if command -v apt-get &> /dev/null; then
+        package_manager="apt-get"
+        update_cmd="apt-get update -qq"
+        install_cmd="apt-get install -y -qq"
+    elif command -v dnf &> /dev/null; then
+        package_manager="dnf"
+        install_cmd="dnf install -y -q"
+    elif command -v yum &> /dev/null; then
+        package_manager="yum"
+        install_cmd="yum install -y -q"
+    elif command -v pacman &> /dev/null; then
+        package_manager="pacman"
+        install_cmd="pacman -S --noconfirm"
+    elif command -v brew &> /dev/null; then
+        package_manager="brew"
+        install_cmd="brew install"
+    else
+        log_error "No supported package manager found (apt-get, dnf, yum, pacman, brew)"
+        log_error "Please install required dependencies manually: ${dependencies[*]}"
+        return 1
+    fi
+
+    log_progress "Detected package manager: $package_manager"
+    check_sudo
+
+    # Update package index if applicable
+    if [ -n "$update_cmd" ]; then
+        log_progress "Updating package index"
+        if ! eval "$SUDO $update_cmd" 2>/dev/null; then
+            log_warning "Failed to update package index, continuing anyway"
+        fi
+    fi
+
+    # Install missing dependencies
+    log_progress "Checking and installing missing dependencies"
+    local missing_deps=()
+    
+    for dep in "${dependencies[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [ ${#missing_deps[@]} -eq 0 ]; then
+        log_success "All dependencies already installed: ${dependencies[*]}"
+        return 0
+    fi
+    
+    log_install "Installing missing dependencies: ${missing_deps[*]}"
+    for dep in "${missing_deps[@]}"; do
+        log_install "Installing $dep via $package_manager"
+        if eval "$SUDO $install_cmd $dep" 2>/dev/null; then
+            log_success "$dep installed successfully"
+        else
+            log_warning "Failed to install $dep via $package_manager"
+        fi
+    done
+    
+    return 0
+}
+
+# ===============================================
+# Configuration and Symlink Management
+# ===============================================
+
+# Enhanced symlink creation with better error handling and validation
 create_symlinks() {
     local items=("$@")
+    local success_count=0
+    local failure_count=0
+    
+    if [ ${#items[@]} -eq 0 ]; then
+        log_warning "No symlinks to create"
+        return 0
+    fi
+    
+    log_progress "Creating ${#items[@]} symlinks"
+    
     for item in "${items[@]}"; do
+        if [[ "$item" != *":"* ]]; then
+            log_error "Invalid symlink format: '$item' (expected 'source:target')"
+            ((failure_count++))
+            continue
+        fi
+        
         IFS=':' read -r source target <<<"$item"
-
-        # Check if target exists (file, symlink, or directory) and remove it
+        
+        if [ -z "$source" ] || [ -z "$target" ]; then
+            log_error "Empty source or target in: '$item'"
+            ((failure_count++))
+            continue
+        fi
+        
+        local full_source="$DOTFILES_DIR/$source"
+        
+        # Validate source exists
+        if [ ! -e "$full_source" ]; then
+            log_error "Source does not exist: $full_source"
+            ((failure_count++))
+            continue
+        fi
+        
+        # Create target directory if needed
+        local target_dir
+        target_dir="$(dirname "$target")"
+        if [ ! -d "$target_dir" ]; then
+            log_progress "Creating directory: $target_dir"
+            if ! mkdir -p "$target_dir"; then
+                log_error "Failed to create directory: $target_dir"
+                ((failure_count++))
+                continue
+            fi
+        fi
+        
+        # Handle existing target
         if [ -e "$target" ] || [ -L "$target" ]; then
-            log_progress "Removing existing file/directory/symlink: $target"
-            rm -rf "$target"
+            if [ -L "$target" ] && [ "$(readlink "$target")" = "$full_source" ]; then
+                log_install "Symlink already correct: $source -> $target"
+                ((success_count++))
+                continue
+            fi
+            
+            log_progress "Removing existing target: $target"
+            if ! rm -rf "$target"; then
+                log_error "Failed to remove existing target: $target"
+                ((failure_count++))
+                continue
+            fi
         fi
 
         # Create the new symlink
-        ln -s "$DOTFILES_DIR/$source" "$target" || error_exit "Error creating symlink $target"
-        log_success "Created symlink for $source -> $target"
-    done
-}
-
-create_directories() {
-    local directories=("$@")
-    for dir in "${directories[@]}"; do
-        if [ -d "$dir" ]; then
-            log_progress "Directory already exists: $dir"
+        if ln -s "$full_source" "$target"; then
+            log_success "Created symlink: $source -> $target"
+            ((success_count++))
         else
-            mkdir -p "$dir" || error_exit "Error creating directory $dir"
-            log_progress "Created directory: $dir"
+            log_error "Failed to create symlink: $source -> $target"
+            ((failure_count++))
         fi
     done
-    log_success "Created required directories"
+    
+    log_progress "Symlink creation complete: $success_count successful, $failure_count failed"
+    
+    if [ $failure_count -gt 0 ]; then
+        return 1
+    fi
+    return 0
+}
+
+# Enhanced directory creation with validation and error handling
+create_directories() {
+    local directories=("$@")
+    local success_count=0
+    local skipped_count=0
+    local failure_count=0
+    
+    if [ ${#directories[@]} -eq 0 ]; then
+        log_warning "No directories to create"
+        return 0
+    fi
+    
+    log_progress "Creating ${#directories[@]} directories"
+    
+    for dir in "${directories[@]}"; do
+        if [ -z "$dir" ]; then
+            log_warning "Empty directory path provided"
+            ((skipped_count++))
+            continue
+        fi
+        
+        if [ -d "$dir" ]; then
+            log_install "Directory already exists: $dir"
+            ((success_count++))
+        elif [ -L "$dir" ]; then
+            log_install "Symlink already exists at directory location: $dir"
+            ((success_count++))
+        elif [ -e "$dir" ]; then
+            log_error "File exists at directory location: $dir (cannot create directory)"
+            ((failure_count++))
+        else
+            if mkdir -p "$dir"; then
+                log_success "Created directory: $dir"
+                ((success_count++))
+            else
+                log_error "Failed to create directory: $dir"
+                ((failure_count++))
+            fi
+        fi
+    done
+    
+    log_progress "Directory creation complete: $success_count successful, $skipped_count skipped, $failure_count failed"
+    
+    if [ $failure_count -gt 0 ]; then
+        return 1
+    fi
+    return 0
 }
