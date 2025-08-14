@@ -42,6 +42,7 @@ if [[ "${1:-}" == "--help" ]]; then
     echo "  - git           - Git configuration"
     echo "  - nvim          - Neovim text editor"
     echo "  - starship      - Cross-shell prompt"
+    echo "  - opencode      - OpenCode configuration"
     echo "  - zsh           - Z shell configuration"
     echo "  - bash          - Bash shell configuration"
     exit 0
@@ -86,6 +87,7 @@ common_directories=(
     "$XDG_CONFIG_HOME/lazygit"
     "$XDG_CONFIG_HOME/lazydocker"
     "$XDG_CONFIG_HOME/yazi"
+    "$XDG_CONFIG_HOME/opencode"
 )
 
 # Define symlinks to create (source:target)
@@ -101,6 +103,7 @@ common_items=(
   "config/lazygit/config.yml:$XDG_CONFIG_HOME/lazygit/config.yml"
   "config/lazygit/config.yml:$XDG_CONFIG_HOME/lazydocker/config.yml"
   "config/yazi:$XDG_CONFIG_HOME/yazi"
+  "config/opencode:$XDG_CONFIG_HOME/opencode"
   "shell/zsh:$XDG_CONFIG_HOME/zsh"
   "shell/zsh/.zprofile:$HOME/.zprofile"
   "shell/zsh/.zshrc:$HOME/.zshrc"
@@ -132,6 +135,7 @@ echo "  - Terminal    - Ghostty terminal and tmux multiplexer"
 echo "  - Git         - Git configuration"
 echo "  - Editor      - Neovim configuration"
 echo "  - Prompt      - Starship cross-shell prompt"
+echo "  - AI Assistant - OpenCode configuration"
 echo "  - Package Mgr - Nix configuration"
 echo
 echo "You may need to restart your shell or terminal to see the changes"
