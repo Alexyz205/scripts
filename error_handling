@@ -279,7 +279,7 @@ execute_rollback() {
         ROLLBACK_STACK=()
     else
         # Fallback for shells without associative arrays
-        local rollback_vars=($(env | grep '^ROLLBACK_' | cut -d= -f1 | sort -r))
+        local rollback_vars=($(env | grep '^ROLLBACK_' | cut -d= -f1 | sort -r 2>/dev/null || true))
         
         if [ ${#rollback_vars[@]} -eq 0 ]; then
             return 0
@@ -289,7 +289,7 @@ execute_rollback() {
         
         for var in "${rollback_vars[@]}"; do
             local rollback_op
-            eval "rollback_op=\$$var"
+            eval "rollback_op=\$$var" 2>/dev/null || continue
             log_debug "Rolling back: $rollback_op"
             
             if ! eval "$rollback_op" 2>/dev/null; then
@@ -297,7 +297,7 @@ execute_rollback() {
             fi
             
             # Clear the variable
-            unset "$var"
+            unset "$var" 2>/dev/null || true
         done
     fi
 }

@@ -60,11 +60,11 @@ if [[ "${1:-}" == "--help" ]]; then
     echo "This script installs kubectl, k9s, helm, helmfile, and configures the Catppuccin theme for k9s."
     echo
     echo "Components that will be installed:"
-    echo " ${INFO_ICON} kubectl    - Kubernetes command-line tool"
-    echo " ${INFO_ICON} k9s        - Terminal UI for Kubernetes"
-    echo " ${INFO_ICON} helm       - Kubernetes package manager"
-    echo " ${INFO_ICON} helmfile   - Declarative spec for deploying helm charts"
-    echo " ${INFO_ICON} helm-diff  - Helm plugin for showing differences"
+    echo " - kubectl    - Kubernetes command-line tool"
+    echo " - k9s        - Terminal UI for Kubernetes"
+    echo " - helm       - Kubernetes package manager"
+    echo " - helmfile   - Declarative spec for deploying helm charts"
+    echo " - helm-diff  - Helm plugin for showing differences"
     exit 0
 fi
 
@@ -139,10 +139,10 @@ fi
 log_complete "Versions loaded from lock file"
 
 log "Using the following versions:"
-echo -e " ${INFO_ICON} kubectl:   ${BOLD}v${KUBECTL_VERSION}${RESET}"
-echo -e " ${INFO_ICON} k9s:       ${BOLD}v${K9S_VERSION}${RESET}"
-echo -e " ${INFO_ICON} helm:      ${BOLD}v${HELM_VERSION}${RESET}"
-echo -e " ${INFO_ICON} helmfile:  ${BOLD}v${HELMFILE_VERSION}${RESET}"
+echo " - kubectl:   v${KUBECTL_VERSION}"
+echo " - k9s:       v${K9S_VERSION}"
+echo " - helm:      v${HELM_VERSION}"
+echo " - helmfile:  v${HELMFILE_VERSION}"
 
 # Set platform based on architecture.
 if [ "$ARCH" = "aarch64" ]; then
@@ -172,7 +172,22 @@ install_command "helmfile" "curl -LO \"https://github.com/helmfile/helmfile/rele
 
 # Install Helm plugins
 log_progress "Installing Helm plugins..."
-install_command "helm-diff" "helm plugin install https://github.com/databus23/helm-diff" "helm diff" "" true
+
+# Install helm-diff with cleanup for incompatible versions
+install_helm_diff() {
+    if helm plugin list | grep -q "^diff"; then
+        log_progress "Removing existing helm-diff plugin"
+        helm plugin uninstall diff || true
+    fi
+    
+    # Install latest compatible version
+    helm plugin install https://github.com/databus23/helm-diff --version v3.9.11 || {
+        log_warning "Failed to install specific version, trying without version constraint"
+        helm plugin install https://github.com/databus23/helm-diff
+    }
+}
+
+install_command "helm-diff" "install_helm_diff" "helm diff" "" true
 install_command "helm-secrets" "helm plugin install https://github.com/jkroepke/helm-secrets" "helm secrets" "" true
 
 section_header "Configuring K9s Theme"
@@ -204,11 +219,11 @@ log_success "Catppuccin theme for k9s set successfully"
 section_header "Installation Complete"
 log_complete "All Kubernetes tools were installed successfully!"
 echo
-echo "${INFO_ICON} Commands available:"
-echo -e "  ${BOLD}kubectl${RESET} - Kubernetes CLI"
-echo -e "  ${BOLD}k9s${RESET}     - Kubernetes TUI with Catppuccin theme"
-echo -e "  ${BOLD}helm${RESET}    - Package manager for Kubernetes"
-echo -e "  ${BOLD}helmfile${RESET} - Declarative spec for deploying helm charts"
+echo "Commands available:"
+echo "  kubectl - Kubernetes CLI"
+echo "  k9s     - Kubernetes TUI with Catppuccin theme"
+echo "  helm    - Package manager for Kubernetes"
+echo "  helmfile - Declarative spec for deploying helm charts"
 echo
 
 exit 0

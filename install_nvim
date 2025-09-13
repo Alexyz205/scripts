@@ -65,8 +65,8 @@ if [ "${1:-}" == "--help" ]; then
     echo "This script builds Neovim from source and installs it on your system."
     echo
     echo "Options:"
-    echo " ${INFO_ICON} --targz    - Create a distributable tar.gz package instead of installing"
-    echo " ${INFO_ICON} --help     - Display this help message"
+    echo " - --targz    - Create a distributable tar.gz package instead of installing"
+    echo " - --help     - Display this help message"
     exit 0
 elif [ "${1:-}" == "--targz" ]; then
     PACKAGE_MODE=targz
@@ -138,7 +138,7 @@ if [ "$PACKAGE_MODE" = "targz" ]; then
     tar -czvf "$TAR_PATH" -C "$NVIM_DIR" "nvim-linux-$ARCH"
 
     log_success "Packaged Neovim as ${TAR_NAME}"
-    echo "${SUCCESS_ICON} Package created at: $TAR_PATH"
+    echo "Package created at: $TAR_PATH"
 else
     section_header "Installing Neovim"
 
@@ -146,7 +146,7 @@ else
     $SUDO make install
     log_success "Neovim installed successfully"
 
-    echo "${INFO_ICON} Verify installation with: ${BOLD}nvim --version${RESET}"
+    echo "Verify installation with: nvim --version"
 fi
 
 section_header "Process Complete"
