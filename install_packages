@@ -95,7 +95,6 @@ if [[ "$*" == *"--help"* ]]; then
     echo
     echo "Tools that will be installed:"
     echo " - starship   - Cross-shell prompt"
-
     echo " - zoxide     - Smarter cd command"
     echo " - fzf        - Fuzzy finder"
     echo " - ripgrep    - Fast grep alternative"
@@ -105,7 +104,6 @@ if [[ "$*" == *"--help"* ]]; then
     echo " - eza        - Modern ls alternative"
     echo " - nvim       - Neovim text editor"
     echo " - node       - JavaScript runtime"
-
     echo " - bat        - Syntax highlighting pager"
     echo " - yazi       - File manager"
     exit 0
@@ -165,7 +163,6 @@ eval $(parse_yaml "$LOCK_FILE" "LOCK_")
 
 # Extract version numbers from lock file - exit with error if any are missing
 STARSHIP_VERSION="${LOCK_packages_cli_tools_starship}"
-
 ZOXIDE_VERSION="${LOCK_packages_cli_tools_zoxide}"
 FZF_VERSION="${LOCK_packages_cli_tools_fzf}"
 RG_VERSION="${LOCK_packages_cli_tools_ripgrep}"
@@ -175,14 +172,12 @@ NVIM_VERSION="${LOCK_packages_cli_tools_nvim}"
 DIRENV_VERSION="${LOCK_packages_cli_tools_direnv}"
 EZA_VERSION="${LOCK_packages_cli_tools_eza}"
 NODE_VERSION="${LOCK_packages_cli_tools_node}"
-
 BAT_VERSION="${LOCK_packages_cli_tools_bat}"
 YAZI_VERSION="${LOCK_packages_cli_tools_yazi}"
 
 # Validate that all required versions are present
 MISSING_PACKAGES=()
 [[ -z "$STARSHIP_VERSION" ]] && MISSING_PACKAGES+=("starship")
-
 [[ -z "$ZOXIDE_VERSION" ]] && MISSING_PACKAGES+=("zoxide")
 [[ -z "$FZF_VERSION" ]] && MISSING_PACKAGES+=("fzf")
 [[ -z "$RG_VERSION" ]] && MISSING_PACKAGES+=("ripgrep")
@@ -192,7 +187,6 @@ MISSING_PACKAGES=()
 [[ -z "$DIRENV_VERSION" ]] && MISSING_PACKAGES+=("direnv")
 [[ -z "$EZA_VERSION" ]] && MISSING_PACKAGES+=("eza")
 [[ -z "$NODE_VERSION" ]] && MISSING_PACKAGES+=("node")
-
 [[ -z "$BAT_VERSION" ]] && MISSING_PACKAGES+=("bat")
 [[ -z "$YAZI_VERSION" ]] && MISSING_PACKAGES+=("yazi")
 
@@ -205,9 +199,8 @@ fi
 log_success "All package versions loaded from lock file"
 
 log_progress "Package versions to be installed:"
-echo "  📦 CLI Tools:"
+echo "  CLI Tools:"
 echo "    • starship:   v${STARSHIP_VERSION}"
-
 echo "    • zoxide:     v${ZOXIDE_VERSION}"
 echo "    • fzf:        v${FZF_VERSION}"
 echo "    • ripgrep:    v${RG_VERSION}"
@@ -217,40 +210,42 @@ echo "    • nvim:       v${NVIM_VERSION}"
 echo "    • direnv:     v${DIRENV_VERSION}"
 echo "    • eza:        v${EZA_VERSION}"
 echo "    • node:       v${NODE_VERSION}"
-
 echo "    • bat:        v${BAT_VERSION}"
 echo "    • yazi:       v${YAZI_VERSION}"
 
-# Set platforms based on architecture.
-# Standardized on GNU libc for consistency and compatibility
+# ===============================================
+# Architecture and Platform Configuration
+# ===============================================
+
+# Binary suffixes - standardized on GNU libc for consistency and compatibility
 GNU_SUFFIX="unknown-linux-gnu"
 MUSL_SUFFIX="unknown-linux-musl"
 
-# Set architecture-specific suffix for ripgrep
+# Architecture-specific platform configurations
 if [ "$ARCH" = "aarch64" ]; then
-  RIPGREP_SUFFIX="unknown-linux-gnu"
+    # ARM64-specific configurations
+    LAZYGIT_PLATFORM="Linux_arm64"
+    DIRENV_PLATFORM="linux-arm64"
+    NODE_PLATFORM="linux-arm64"
+    FZF_PLATFORM="arm64"
+    NVIM_PLATFORM="arm64"
+    
+    # Architecture-specific suffix for ripgrep (ARM64 uses GNU)
+    RIPGREP_SUFFIX="unknown-linux-gnu"
+    
+    log "Detected ARM64 architecture"
 else
-  RIPGREP_SUFFIX="unknown-linux-musl"
-fi
-
-if [ "$ARCH" = "aarch64" ]; then
-  # ARM64-specific platforms
-  LAZYGIT_PLATFORM="Linux_arm64"
-  DIRENV_PLATFORM="linux-arm64"
-  NODE_PLATFORM="linux-arm64"
-  FZF_PLATFORM="arm64"
-
-  NVIM_PLATFORM="arm64"
-  log "Detected ARM64 architecture"
-else
-  # x86_64-specific platforms
-  LAZYGIT_PLATFORM="Linux_x86_64"
-  DIRENV_PLATFORM="linux-amd64"
-  NODE_PLATFORM="linux-x64"
-  FZF_PLATFORM="amd64"
-
-  NVIM_PLATFORM="x86_64"
-  log "Detected x86_64 architecture"
+    # x86_64-specific configurations
+    LAZYGIT_PLATFORM="Linux_x86_64"
+    DIRENV_PLATFORM="linux-amd64"
+    NODE_PLATFORM="linux-x64"
+    FZF_PLATFORM="amd64"
+    NVIM_PLATFORM="x86_64"
+    
+    # Architecture-specific suffix for ripgrep (x86_64 uses MUSL)
+    RIPGREP_SUFFIX="unknown-linux-musl"
+    
+    log "Detected x86_64 architecture"
 fi
 
 # Installations
@@ -330,7 +325,6 @@ fi
 echo
 echo "Tools installed:"
 echo "  - starship  - Cross-shell prompt"
-
 echo "  - zoxide    - Smarter cd command"
 echo "  - fzf       - Fuzzy finder"
 echo "  - ripgrep   - Fast grep alternative"
@@ -340,7 +334,6 @@ echo "  - direnv    - Environment switcher"
 echo "  - eza       - Modern ls alternative"
 echo "  - nvim      - Neovim text editor"
 echo "  - node      - JavaScript runtime"
-
 echo "  - bat       - Syntax highlighting pager"
 echo "  - yazi      - File manager"
 echo
