@@ -122,9 +122,7 @@ fi
 section_header "Creating Symlinks"
 
 log_progress "Setting up configuration symlinks"
-if ! create_symlinks "${common_items[@]}"; then
-    error_exit "Failed to create required symlinks"
-fi
+create_symlinks "${common_items[@]}" || log_warning "Some symlinks failed to create, but continuing setup"
 
 section_header "Setup Complete"
 log_complete "Dotfiles have been successfully configured!"
