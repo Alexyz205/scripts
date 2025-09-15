@@ -105,7 +105,7 @@ if [[ "$*" == *"--help"* ]]; then
     echo " - eza        - Modern ls alternative"
     echo " - nvim       - Neovim text editor"
     echo " - node       - JavaScript runtime"
-    echo " - carapace   - Command line completions"
+
     echo " - bat        - Syntax highlighting pager"
     echo " - yazi       - File manager"
     exit 0
@@ -175,7 +175,7 @@ NVIM_VERSION="${LOCK_packages_cli_tools_nvim}"
 DIRENV_VERSION="${LOCK_packages_cli_tools_direnv}"
 EZA_VERSION="${LOCK_packages_cli_tools_eza}"
 NODE_VERSION="${LOCK_packages_cli_tools_node}"
-CARAPACE_VERSION="${LOCK_packages_cli_tools_carapace}"
+
 BAT_VERSION="${LOCK_packages_cli_tools_bat}"
 YAZI_VERSION="${LOCK_packages_cli_tools_yazi}"
 
@@ -192,7 +192,7 @@ MISSING_PACKAGES=()
 [[ -z "$DIRENV_VERSION" ]] && MISSING_PACKAGES+=("direnv")
 [[ -z "$EZA_VERSION" ]] && MISSING_PACKAGES+=("eza")
 [[ -z "$NODE_VERSION" ]] && MISSING_PACKAGES+=("node")
-[[ -z "$CARAPACE_VERSION" ]] && MISSING_PACKAGES+=("carapace")
+
 [[ -z "$BAT_VERSION" ]] && MISSING_PACKAGES+=("bat")
 [[ -z "$YAZI_VERSION" ]] && MISSING_PACKAGES+=("yazi")
 
@@ -217,7 +217,7 @@ echo "    • nvim:       v${NVIM_VERSION}"
 echo "    • direnv:     v${DIRENV_VERSION}"
 echo "    • eza:        v${EZA_VERSION}"
 echo "    • node:       v${NODE_VERSION}"
-echo "    • carapace:   v${CARAPACE_VERSION}"
+
 echo "    • bat:        v${BAT_VERSION}"
 echo "    • yazi:       v${YAZI_VERSION}"
 
@@ -239,7 +239,7 @@ if [ "$ARCH" = "aarch64" ]; then
   DIRENV_PLATFORM="linux-arm64"
   NODE_PLATFORM="linux-arm64"
   FZF_PLATFORM="arm64"
-  CARAPACE_PLATFORM="linux_arm64"
+
   NVIM_PLATFORM="arm64"
   log "Detected ARM64 architecture"
 else
@@ -248,7 +248,7 @@ else
   DIRENV_PLATFORM="linux-amd64"
   NODE_PLATFORM="linux-x64"
   FZF_PLATFORM="amd64"
-  CARAPACE_PLATFORM="linux_amd64"
+
   NVIM_PLATFORM="x86_64"
   log "Detected x86_64 architecture"
 fi
@@ -313,10 +313,7 @@ install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/n
   tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && \
   $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/" "node" "" "$FORCE_INSTALL"
 
-log_progress "Installing carapace command completion..."
-install_command "carapace" "curl -k -LO \"https://github.com/carapace-sh/carapace-bin/releases/download/v${CARAPACE_VERSION}/carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz\" && \
-  tar -xzf carapace-bin_${CARAPACE_VERSION}_${CARAPACE_PLATFORM}.tar.gz && \
-  $SUDO install carapace -D -t /usr/local/bin/" "carapace" "" "$FORCE_INSTALL"
+
 
 log_progress "Installing bat syntax highlighting pager..."
 install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
@@ -348,7 +345,7 @@ echo "  - direnv    - Environment switcher"
 echo "  - eza       - Modern ls alternative"
 echo "  - nvim      - Neovim text editor"
 echo "  - node      - JavaScript runtime"
-echo "  - carapace  - Command line completions"
+
 echo "  - bat       - Syntax highlighting pager"
 echo "  - yazi      - File manager"
 echo
