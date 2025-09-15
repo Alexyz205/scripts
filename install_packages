@@ -9,7 +9,7 @@ set -euo pipefail
 #
 # Author: Alexis
 # Version: 2.0
-# Last Updated: 2025-08-07
+# Last Updated: 2025-09-15
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
@@ -95,7 +95,7 @@ if [[ "$*" == *"--help"* ]]; then
     echo
     echo "Tools that will be installed:"
     echo " - starship   - Cross-shell prompt"
-    echo " - tmux       - Terminal multiplexer"
+
     echo " - zoxide     - Smarter cd command"
     echo " - fzf        - Fuzzy finder"
     echo " - ripgrep    - Fast grep alternative"
@@ -165,7 +165,7 @@ eval $(parse_yaml "$LOCK_FILE" "LOCK_")
 
 # Extract version numbers from lock file - exit with error if any are missing
 STARSHIP_VERSION="${LOCK_packages_cli_tools_starship}"
-TMUX_VERSION="${LOCK_packages_cli_tools_tmux}"
+
 ZOXIDE_VERSION="${LOCK_packages_cli_tools_zoxide}"
 FZF_VERSION="${LOCK_packages_cli_tools_fzf}"
 RG_VERSION="${LOCK_packages_cli_tools_ripgrep}"
@@ -182,7 +182,7 @@ YAZI_VERSION="${LOCK_packages_cli_tools_yazi}"
 # Validate that all required versions are present
 MISSING_PACKAGES=()
 [[ -z "$STARSHIP_VERSION" ]] && MISSING_PACKAGES+=("starship")
-[[ -z "$TMUX_VERSION" ]] && MISSING_PACKAGES+=("tmux")
+
 [[ -z "$ZOXIDE_VERSION" ]] && MISSING_PACKAGES+=("zoxide")
 [[ -z "$FZF_VERSION" ]] && MISSING_PACKAGES+=("fzf")
 [[ -z "$RG_VERSION" ]] && MISSING_PACKAGES+=("ripgrep")
@@ -207,7 +207,7 @@ log_success "All package versions loaded from lock file"
 log_progress "Package versions to be installed:"
 echo "  📦 CLI Tools:"
 echo "    • starship:   v${STARSHIP_VERSION}"
-echo "    • tmux:       v${TMUX_VERSION}"
+
 echo "    • zoxide:     v${ZOXIDE_VERSION}"
 echo "    • fzf:        v${FZF_VERSION}"
 echo "    • ripgrep:    v${RG_VERSION}"
@@ -264,9 +264,6 @@ install_command "starship" "curl -k -L \"https://github.com/starship/starship/re
   tar -xzf starship.tar.gz && \
   $SUDO install starship -D -t /usr/local/bin/" "starship" "" "$FORCE_INSTALL"
 
-log_progress "Installing tmux terminal multiplexer..."
-install_command "tmux" "curl -k -LO \"https://github.com/Alexyz205/package_builder/releases/download/1.1.0/tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz\" && $SUDO tar -xzf tmux_release_${TMUX_VERSION}_${ARCH}.tar.gz --strip-components=1 -C /usr/local && $SUDO ln -s /usr/local/lib/libevent_core-2.1.so.7 /lib/libevent_core-2.1.so.7" "tmux" "" "$FORCE_INSTALL"
-
 log_progress "Installing zoxide directory navigator..."
 install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz\" -o zoxide.tar.gz && \
   tar -xzf zoxide.tar.gz && \
@@ -313,8 +310,6 @@ install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/n
   tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && \
   $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/" "node" "" "$FORCE_INSTALL"
 
-
-
 log_progress "Installing bat syntax highlighting pager..."
 install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
   tar -xzf bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
@@ -335,7 +330,7 @@ fi
 echo
 echo "Tools installed:"
 echo "  - starship  - Cross-shell prompt"
-echo "  - tmux      - Terminal multiplexer"
+
 echo "  - zoxide    - Smarter cd command"
 echo "  - fzf       - Fuzzy finder"
 echo "  - ripgrep   - Fast grep alternative"
