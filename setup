@@ -94,6 +94,7 @@ common_directories=(
 common_items=(
   "nvim:$XDG_CONFIG_HOME/nvim"
   "config/ghostty/config:$XDG_CONFIG_HOME/ghostty/config"
+  "config/ghostty/themes:$XDG_CONFIG_HOME/ghostty/themes"
   "config/nix:$XDG_CONFIG_HOME/nix"
   "config/tmux/.tmux:$HOME/.tmux"
   "config/tmux/.tmux.conf:$HOME/.tmux.conf"
