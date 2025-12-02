@@ -106,6 +106,7 @@ if [[ "$*" == *"--help"* ]]; then
     echo " - node       - JavaScript runtime"
     echo " - bat        - Syntax highlighting pager"
     echo " - yazi       - File manager"
+    echo " - tree-sitter - Parser generator tool"
     exit 0
 fi
 
@@ -174,6 +175,7 @@ EZA_VERSION="${LOCK_packages_cli_tools_eza}"
 NODE_VERSION="${LOCK_packages_cli_tools_node}"
 BAT_VERSION="${LOCK_packages_cli_tools_bat}"
 YAZI_VERSION="${LOCK_packages_cli_tools_yazi}"
+TREE_SITTER_VERSION="${LOCK_packages_cli_tools_tree_sitter}"
 
 # Validate that all required versions are present
 MISSING_PACKAGES=()
@@ -189,6 +191,7 @@ MISSING_PACKAGES=()
 [[ -z "$NODE_VERSION" ]] && MISSING_PACKAGES+=("node")
 [[ -z "$BAT_VERSION" ]] && MISSING_PACKAGES+=("bat")
 [[ -z "$YAZI_VERSION" ]] && MISSING_PACKAGES+=("yazi")
+[[ -z "$TREE_SITTER_VERSION" ]] && MISSING_PACKAGES+=("tree_sitter")
 
 if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
     log_error "Missing versions in lock file for packages: ${MISSING_PACKAGES[*]}"
@@ -212,6 +215,7 @@ echo "    • eza:        v${EZA_VERSION}"
 echo "    • node:       v${NODE_VERSION}"
 echo "    • bat:        v${BAT_VERSION}"
 echo "    • yazi:       v${YAZI_VERSION}"
+echo "    • tree-sitter: v${TREE_SITTER_VERSION}"
 
 # ===============================================
 # Architecture and Platform Configuration
@@ -316,6 +320,18 @@ install_command "yazi" "curl -k -LO \"https://github.com/sxyazi/yazi/releases/do
   $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/yazi -D -t /usr/local/bin/ && \
   $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/ya -D -t /usr/local/bin/" "yazi" "" "$FORCE_INSTALL"
 
+log_progress "Installing tree-sitter CLI..."
+if command -v npm &> /dev/null; then
+  if [ "$FORCE_INSTALL" = true ] || ! command -v tree-sitter &> /dev/null; then
+    $SUDO npm install -g tree-sitter-cli@${TREE_SITTER_VERSION}
+    log_success "tree-sitter-cli v${TREE_SITTER_VERSION} installed successfully"
+  else
+    log_success "tree-sitter-cli is already installed (use --force to reinstall)"
+  fi
+else
+  log_warning "npm not found, skipping tree-sitter-cli installation"
+fi
+
 section_header "Installation Summary"
 if [ "$FORCE_INSTALL" = true ]; then
     log_complete "All tools have been successfully reinstalled/updated!"
@@ -336,6 +352,7 @@ echo "  - nvim      - Neovim text editor"
 echo "  - node      - JavaScript runtime"
 echo "  - bat       - Syntax highlighting pager"
 echo "  - yazi      - File manager"
+echo "  - tree-sitter - Parser generator tool (via npm)"
 echo
 if [ "$FORCE_INSTALL" = true ]; then
     echo "All packages were reinstalled using --force mode."
