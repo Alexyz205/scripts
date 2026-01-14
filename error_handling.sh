@@ -9,7 +9,7 @@ set -euo pipefail
 #
 # Author: Alexis
 # Version: 2.0
-# Last Updated: 2025-08-07
+# Last Updated: 2026-01-14
 
 # Global error handling state
 # Check if we're running in bash with associative array support

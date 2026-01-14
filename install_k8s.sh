@@ -9,21 +9,21 @@ set -euo pipefail
 #
 # Author: Alexis
 # Version: 2.0
-# Last Updated: 2025-08-07
+# Last Updated: 2026-01-14
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 # Initialize error handling
-if [ -f "$SCRIPT_DIR/error_handling" ]; then
-    source "$SCRIPT_DIR/error_handling"
+if [ -f "$SCRIPT_DIR/error_handling.sh" ]; then
+    source "$SCRIPT_DIR/error_handling.sh"
     init_error_handling "install_k8s"
 else
     set -euo pipefail
 fi
 
-source "$SCRIPT_DIR/logs"
-source "$SCRIPT_DIR/utils"
-source "$SCRIPT_DIR/checker"
+source "$SCRIPT_DIR/logs.sh"
+source "$SCRIPT_DIR/utils.sh"
+source "$SCRIPT_DIR/checker.sh"
 
 # Create a global temp directory for logs and other shared resources
 INSTALL_TEMP_DIR=$(create_temp_dir "k8s_install")
@@ -91,18 +91,23 @@ LOCK_FILE="$DOTFILES_ROOT/packages.lock.yml"
 
 # Parse YAML function (simple key-value parser)
 parse_yaml() {
-    local prefix=$2
-    local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+    local file="$1"
+    local prefix="$2"
+    local s='[[:space:]]*' 
+    local w='[a-zA-Z0-9_]*'
+    local fs
+    fs=$(echo @|tr @ '\034')
+    
     sed -ne "s|^\($s\):|\1|" \
         -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
-    awk -F$fs '{
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$file" |
+    awk -F"$fs" '{
         indent = length($1)/2;
         vname[indent] = $2;
         for (i in vname) {if (i > indent) {delete vname[i]}}
         if (length($3) > 0) {
             vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-            printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+            printf("%s%s%s=\"%s\"\n", "'"$prefix"'",vn, $2, $3);
         }
     }'
 }

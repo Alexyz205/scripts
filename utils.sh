@@ -9,11 +9,11 @@ set -euo pipefail
 #
 # Author: Alexis
 # Version: 2.0
-# Last Updated: 2025-08-07
+# Last Updated: 2026-01-14
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-source "$SCRIPT_DIR/logs"
-source "$SCRIPT_DIR/checker"
+source "$SCRIPT_DIR/logs.sh"
+source "$SCRIPT_DIR/checker.sh"
 
 # ===============================================
 # Temporary Directory Management

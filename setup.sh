@@ -9,20 +9,20 @@ set -euo pipefail
 #
 # Author: Alexis
 # Version: 2.0
-# Last Updated: 2025-08-07
+# Last Updated: 2026-01-14
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 # Initialize error handling
-if [ -f "$SCRIPT_DIR/error_handling" ]; then
-  source "$SCRIPT_DIR/error_handling"
+if [ -f "$SCRIPT_DIR/error_handling.sh" ]; then
+  source "$SCRIPT_DIR/error_handling.sh"
   init_error_handling "setup"
 else
   set -euo pipefail
 fi
 
-source "$SCRIPT_DIR/logs"
-source "$SCRIPT_DIR/utils"
+source "$SCRIPT_DIR/logs.sh"
+source "$SCRIPT_DIR/utils.sh"
 
 export XDG_CONFIG_HOME="$HOME/.config"
 
