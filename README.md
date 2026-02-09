@@ -11,8 +11,9 @@ This directory contains the core automation scripts for the dotfiles repository,
 | **checker.sh** | System validation (architecture, sudo, requirements) | Sourced for system checks |
 | **utils.sh** | Common utilities (temp dirs, dependencies, installs) | Sourced for shared functions |
 | **setup.sh** | Creates symlinks and configuration directories | Run directly or via setup_dotfiles |
-| **install_packages.sh** | Installs development tools from lock file | Run directly with optional --force |
-| **install_k8s.sh** | Installs Kubernetes tools (kubectl, k9s, helm) | Run directly |
+| **install_packages.sh** | Installs development tools using mise | Run directly with optional --force |
+| **configure_helm.sh** | Configures Helm plugins (diff, secrets) | Called by install_packages or run standalone |
+| **configure_k9s.sh** | Sets up Catppuccin theme for k9s | Called by install_packages or run standalone |
 
 ## 🏗️ Architecture
 
@@ -24,7 +25,8 @@ This directory contains the core automation scripts for the dotfiles repository,
 ├─────────────────────────────────────────┤
 │   Installation Scripts                  │
 │   • install_packages.sh                 │
-│   • install_k8s.sh                      │
+│   • configure_helm.sh                   │
+│   • configure_k9s.sh                    │
 │   • setup.sh                            │
 ├─────────────────────────────────────────┤
 │   Core Utilities Layer                  │
@@ -115,7 +117,7 @@ install_command "tool" "install_cmd" "check_cmd" "" false
 
 ### install_packages.sh
 
-Installs development tools using versions from `packages.lock.yml`:
+Installs all development tools using **mise** as the package manager. Tool versions are managed in `../config/mise/config.toml`:
 
 ```bash
 # Install all packages
@@ -128,23 +130,49 @@ Installs development tools using versions from `packages.lock.yml`:
 ./scripts/install_packages.sh --help
 ```
 
-**Installed Tools**:
-- starship, zoxide, fzf, ripgrep, fd
-- lazygit, nvim, direnv, eza
-- node, bat, yazi, tree-sitter
+**What it does**:
 
-### install_k8s.sh
+1. Installs mise (if not already present)
+2. Installs all tools defined in `config/mise/config.toml`
+3. Configures k9s with Catppuccin theme
+4. Installs Helm plugins (diff, secrets)
 
-Installs Kubernetes tools:
+**Installed Tools** (see `config/mise/config.toml` for full list):
+
+- **Shell & Terminal**: starship, zoxide, fzf, tmux
+- **File & Text**: ripgrep, fd, bat, eza, yazi
+- **Version Control**: lazygit
+- **Editors**: nvim, tree-sitter
+- **Languages**: node, python
+- **Infrastructure**: terraform, ansible
+- **Kubernetes**: kubectl, k9s, helm, helmfile
+- **AI Assistant**: opencode-ai
+
+### configure_helm.sh
+
+Configures Helm with useful plugins:
 
 ```bash
-./scripts/install_k8s.sh
+./scripts/configure_helm.sh
 ```
 
-**Installed Tools**:
-- kubectl, k9s, helm, helmfile
-- helm-diff, helm-secrets plugins
-- Catppuccin theme for k9s
+**Installed Plugins**:
+
+- **helm-diff** (v3.9.11): Show diffs before applying changes
+- **helm-secrets**: Manage encrypted secrets in Helm charts
+
+### configure_k9s.sh
+
+Sets up k9s with Catppuccin Mocha theme:
+
+```bash
+./scripts/configure_k9s.sh
+```
+
+**What it does**:
+
+- Downloads Catppuccin Mocha transparent theme
+- Configures k9s to use the theme automatically
 
 ### setup.sh
 
@@ -155,6 +183,7 @@ Creates symlinks and configuration directories:
 ```
 
 Creates XDG Base Directory structure and symlinks for:
+
 - Shell configs (zsh, bash)
 - Terminal (ghostty, tmux)
 - Editor (nvim)
@@ -169,24 +198,29 @@ Creates XDG Base Directory structure and symlinks for:
 
 ## 📊 Version Management
 
-Tool versions are managed in `../packages.lock.yml`:
+Tool versions are managed in `../config/mise/config.toml`:
 
-```yaml
-packages:
-  cli_tools:
-    starship: "1.24.1"
-    zoxide: "0.9.8"
-    # ...
-  k8s_tools:
-    kubectl: "1.34.1"
-    k9s: "0.50.12"
-    # ...
+```toml
+[tools]
+# Programming Languages
+node = "24.11.1"
+python = "3.14.3"
+
+# Shell Tools
+"ubi:starship/starship" = "1.24.1"
+"ubi:ajeetdsouza/zoxide" = "0.9.8"
+
+# Kubernetes Tools
+kubectl = "1.34.1"
+"ubi:derailed/k9s" = "0.50.12"
+helm = "3.19.0"
+# ...
 ```
 
-Update versions in the lock file and re-run installation scripts to upgrade.
+Update versions in the config file and re-run `mise install` to upgrade tools.
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2026-01-14  
+**Version**: 2.1  
+**Last Updated**: 2026-02-09  
 **Maintained by**: Alexis

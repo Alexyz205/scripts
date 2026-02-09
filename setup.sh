@@ -37,7 +37,7 @@ if [[ "${1:-}" == "--help" ]]; then
   echo
   echo "The following configurations will be linked:"
   echo "  - ghostty       - Modern terminal emulator"
-  echo "  - nix           - Nix package manager"
+  echo "  - mise          - Development tool version manager"
   echo "  - tmux          - Terminal multiplexer"
   echo "  - nvim          - Neovim text editor"
   echo "  - starship      - Cross-shell prompt"
@@ -92,7 +92,7 @@ common_items=(
   "nvim:$XDG_CONFIG_HOME/nvim"
   "config/ghostty/config:$XDG_CONFIG_HOME/ghostty/config"
   "config/ghostty/themes:$XDG_CONFIG_HOME/ghostty/themes"
-  "config/nix:$XDG_CONFIG_HOME/nix"
+  "config/mise/config.toml:$XDG_CONFIG_HOME/mise/config.toml"
   "config/tmux/.tmux:$HOME/.tmux"
   "config/tmux/.tmux.conf:$HOME/.tmux.conf"
   "config/starship/starship.toml:$XDG_CONFIG_HOME/starship.toml"

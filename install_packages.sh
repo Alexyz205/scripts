@@ -2,118 +2,67 @@
 set -euo pipefail
 
 # ===============================================
-# Development Tools Package Installer
+# Development Tools Package Installer (Mise-based)
 # ===============================================
-# Installs various tools and utilities commonly used in development environments.
-# Uses a version lock file to ensure consistent installations across systems.
+# Installs mise and uses it to manage all development tools.
+# All tool versions are managed via config/mise/config.toml
 #
 # Author: Alexis
-# Version: 2.0
-# Last Updated: 2026-01-14
+# Version: 4.0
+# Last Updated: 2026-02-09
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 # Initialize error handling
 if [ -f "$SCRIPT_DIR/error_handling.sh" ]; then
-    source "$SCRIPT_DIR/error_handling.sh"
-    init_error_handling "install-packages"
+  source "$SCRIPT_DIR/error_handling.sh"
+  init_error_handling "install-packages"
 else
-    set -euo pipefail
+  set -euo pipefail
 fi
 
 source "$SCRIPT_DIR/logs.sh"
 source "$SCRIPT_DIR/utils.sh"
 source "$SCRIPT_DIR/checker.sh"
 
-# Create a global temp directory for logs and other shared resources
-INSTALL_TEMP_DIR=$(create_temp_dir "dotfiles_install")
-LOG_FILE="$INSTALL_TEMP_DIR/install_packages-$(date +%F).log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-# Cleanup function to ensure temp directory is removed on exit
-cleanup() {
-    local exit_code=$?
-
-    # Keep log file only if there was an error
-    if [ $exit_code -eq 0 ]; then
-        log "Installation completed successfully, cleaning up temporary files"
-    else
-        # Copy log to home directory for troubleshooting if there was an error
-        local backup_log="$HOME/dotfiles_install_error-$(date +%F-%H%M%S).log"
-        cp "$LOG_FILE" "$backup_log"
-        log_warning "Installation encountered an error, log saved to $backup_log"
-    fi
-
-    # Clean up the temp directory
-    cleanup_temp_dir "$INSTALL_TEMP_DIR"
-
-    exit $exit_code
-}
-
-# Register cleanup function to run on script exit
-trap cleanup EXIT
-
 # Parse command line arguments
 FORCE_INSTALL=false
 
 for arg in "$@"; do
-    case $arg in
-        --force)
-            FORCE_INSTALL=true
-            shift
-            ;;
-        --help)
-            section_header "Package Installation Help"
-            echo "Usage: install_packages [--help] [--force]"
-            echo "This script installs various tools and utilities commonly used in development environments."
-            echo
-            echo "Options:"
-            echo "  --help    Show this help message and exit"
-            echo "  --force   Force reinstallation of all packages, even if already installed"
-            echo
-            ;;
-        *)
-            # Unknown option
-            if [[ "$arg" != "" ]]; then
-                log_error "Unknown option: $arg"
-                echo "Use --help for usage information."
-                exit 1
-            fi
-            ;;
-    esac
-done
-
-# Help option
-if [[ "$*" == *"--help"* ]]; then
+  case $arg in
+  --force)
+    FORCE_INSTALL=true
+    shift
+    ;;
+  --help)
     section_header "Package Installation Help"
     echo "Usage: install_packages [--help] [--force]"
-    echo "This script installs various tools and utilities commonly used in development environments."
+    echo "This script installs mise and uses it to manage all development tools."
     echo
     echo "Options:"
     echo "  --help    Show this help message and exit"
-    echo "  --force   Force reinstallation of all packages, even if already installed"
+    echo "  --force   Force reinstallation of all packages"
     echo
-    echo "Tools that will be installed:"
-    echo " - starship   - Cross-shell prompt"
-    echo " - zoxide     - Smarter cd command"
-    echo " - fzf        - Fuzzy finder"
-    echo " - ripgrep    - Fast grep alternative"
-    echo " - fd         - Simple, fast file finder"
-    echo " - lazygit    - Git terminal UI"
-    echo " - direnv     - Environment switcher"
-    echo " - eza        - Modern ls alternative"
-    echo " - nvim       - Neovim text editor"
-    echo " - node       - JavaScript runtime"
-    echo " - bat        - Syntax highlighting pager"
-    echo " - yazi       - File manager"
-    echo " - tree-sitter - Parser generator tool"
+    echo "All tools are defined in config/mise/config.toml"
+    echo "To see available tools: mise list"
+    echo "To add tools: Edit config/mise/config.toml and run 'mise install'"
+    echo "To update tools: mise upgrade"
     exit 0
-fi
+    ;;
+  *)
+    if [[ "$arg" != "" ]]; then
+      log_error "Unknown option: $arg"
+      echo "Use --help for usage information."
+      exit 1
+    fi
+    ;;
+  esac
+done
 
-section_header "Development Tools Installation"
+section_header "Development Tools Installation (Mise)"
 
 if [ "$FORCE_INSTALL" = true ]; then
-    log_warning "Force mode enabled - all packages will be reinstalled"
+  log_warning "Force mode enabled - all packages will be reinstalled"
 fi
 
 # ===============================================
@@ -121,246 +70,94 @@ fi
 # ===============================================
 
 log_progress "Validating system prerequisites"
-if ! validate_dependencies "curl" "tar" "git" "unzip"; then
-    error_exit "Missing critical dependencies for package installation"
+if ! validate_dependencies "curl" "tar" "git"; then
+  error_exit "Missing critical dependencies for package installation"
 fi
 
 check_architecture
-check_sudo
-
 log_success "System validation completed successfully"
 
-# Load versions from lock file or use fallback versions
-DOTFILES_ROOT="$(dirname "$SCRIPT_DIR")"
-LOCK_FILE="$DOTFILES_ROOT/packages.lock.yml"
-
-# Parse YAML function (simple key-value parser)
-parse_yaml() {
-    local file="$1"
-    local prefix="$2"
-    local s='[[:space:]]*' 
-    local w='[a-zA-Z0-9_]*'
-    local fs
-    fs=$(echo @|tr @ '\034')
-    
-    sed -ne "s|^\($s\):|\1|" \
-        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$file" |
-    awk -F"$fs" '{
-        indent = length($1)/2;
-        vname[indent] = $2;
-        for (i in vname) {if (i > indent) {delete vname[i]}}
-        if (length($3) > 0) {
-            vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-            printf("%s%s%s=\"%s\"\n", "'"$prefix"'",vn, $2, $3);
-        }
-    }'
-}
-
-# Load versions from lock file - exit with error if file or versions are missing
-if [[ ! -f "$LOCK_FILE" ]]; then
-    log_error "Lock file not found: $LOCK_FILE"
-    log_error "Please ensure packages.lock.yml exists in the dotfiles root directory"
-    exit 1
-fi
-
-log_progress "Loading versions from lock file..."
-eval $(parse_yaml "$LOCK_FILE" "LOCK_")
-
-# Extract version numbers from lock file - exit with error if any are missing
-STARSHIP_VERSION="${LOCK_packages_cli_tools_starship}"
-ZOXIDE_VERSION="${LOCK_packages_cli_tools_zoxide}"
-FZF_VERSION="${LOCK_packages_cli_tools_fzf}"
-RG_VERSION="${LOCK_packages_cli_tools_ripgrep}"
-FD_VERSION="${LOCK_packages_cli_tools_fd}"
-LAZYGIT_VERSION="${LOCK_packages_cli_tools_lazygit}"
-NVIM_VERSION="${LOCK_packages_cli_tools_nvim}"
-DIRENV_VERSION="${LOCK_packages_cli_tools_direnv}"
-EZA_VERSION="${LOCK_packages_cli_tools_eza}"
-NODE_VERSION="${LOCK_packages_cli_tools_node}"
-BAT_VERSION="${LOCK_packages_cli_tools_bat}"
-YAZI_VERSION="${LOCK_packages_cli_tools_yazi}"
-TREE_SITTER_VERSION="${LOCK_packages_cli_tools_tree_sitter}"
-
-# Validate that all required versions are present
-MISSING_PACKAGES=()
-[[ -z "$STARSHIP_VERSION" ]] && MISSING_PACKAGES+=("starship")
-[[ -z "$ZOXIDE_VERSION" ]] && MISSING_PACKAGES+=("zoxide")
-[[ -z "$FZF_VERSION" ]] && MISSING_PACKAGES+=("fzf")
-[[ -z "$RG_VERSION" ]] && MISSING_PACKAGES+=("ripgrep")
-[[ -z "$FD_VERSION" ]] && MISSING_PACKAGES+=("fd")
-[[ -z "$LAZYGIT_VERSION" ]] && MISSING_PACKAGES+=("lazygit")
-[[ -z "$NVIM_VERSION" ]] && MISSING_PACKAGES+=("nvim")
-[[ -z "$DIRENV_VERSION" ]] && MISSING_PACKAGES+=("direnv")
-[[ -z "$EZA_VERSION" ]] && MISSING_PACKAGES+=("eza")
-[[ -z "$NODE_VERSION" ]] && MISSING_PACKAGES+=("node")
-[[ -z "$BAT_VERSION" ]] && MISSING_PACKAGES+=("bat")
-[[ -z "$YAZI_VERSION" ]] && MISSING_PACKAGES+=("yazi")
-[[ -z "$TREE_SITTER_VERSION" ]] && MISSING_PACKAGES+=("tree_sitter")
-
-if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
-    log_error "Missing versions in lock file for packages: ${MISSING_PACKAGES[*]}"
-    log_error "Please ensure all package versions are defined in packages.lock.yml"
-    exit 1
-fi
-
-log_success "All package versions loaded from lock file"
-
-log_progress "Package versions to be installed:"
-echo "  CLI Tools:"
-echo "    • starship:   v${STARSHIP_VERSION}"
-echo "    • zoxide:     v${ZOXIDE_VERSION}"
-echo "    • fzf:        v${FZF_VERSION}"
-echo "    • ripgrep:    v${RG_VERSION}"
-echo "    • fd:         v${FD_VERSION}"
-echo "    • lazygit:    v${LAZYGIT_VERSION}"
-echo "    • nvim:       v${NVIM_VERSION}"
-echo "    • direnv:     v${DIRENV_VERSION}"
-echo "    • eza:        v${EZA_VERSION}"
-echo "    • node:       v${NODE_VERSION}"
-echo "    • bat:        v${BAT_VERSION}"
-echo "    • yazi:       v${YAZI_VERSION}"
-echo "    • tree-sitter: v${TREE_SITTER_VERSION}"
-
 # ===============================================
-# Architecture and Platform Configuration
+# Mise Installation
 # ===============================================
 
-# Binary suffixes - standardized on GNU libc for consistency and compatibility
-GNU_SUFFIX="unknown-linux-gnu"
-MUSL_SUFFIX="unknown-linux-musl"
+if ! command -v mise &>/dev/null; then
+  log_progress "Installing mise..."
+  curl -fsSL https://mise.run | sh
 
-# Architecture-specific platform configurations
-if [ "$ARCH" = "aarch64" ]; then
-    # ARM64-specific configurations
-    LAZYGIT_PLATFORM="Linux_arm64"
-    DIRENV_PLATFORM="linux-arm64"
-    NODE_PLATFORM="linux-arm64"
-    FZF_PLATFORM="arm64"
-    NVIM_PLATFORM="arm64"
-    
-    # Architecture-specific suffix for ripgrep (ARM64 uses GNU)
-    RIPGREP_SUFFIX="unknown-linux-gnu"
-    
-    log "Detected ARM64 architecture"
-else
-    # x86_64-specific configurations
-    LAZYGIT_PLATFORM="Linux_x86_64"
-    DIRENV_PLATFORM="linux-amd64"
-    NODE_PLATFORM="linux-x64"
-    FZF_PLATFORM="amd64"
-    NVIM_PLATFORM="x86_64"
-    
-    # Architecture-specific suffix for ripgrep (x86_64 uses MUSL)
-    RIPGREP_SUFFIX="unknown-linux-musl"
-    
-    log "Detected x86_64 architecture"
-fi
+  # Add mise to PATH for this session
+  export PATH="$HOME/.local/bin:$PATH"
 
-# Installations
-section_header "Installing Tools"
-
-# All installation commands are now defined to use proper temporary directories
-# Each command represents a use case that will be executed in its own temp directory
-
-log_progress "Installing starship prompt..."
-install_command "starship" "curl -k -L \"https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${ARCH}-${MUSL_SUFFIX}.tar.gz\" -o starship.tar.gz && \
-  tar -xzf starship.tar.gz && \
-  $SUDO install starship -D -t /usr/local/bin/" "starship" "" "$FORCE_INSTALL"
-
-log_progress "Installing zoxide directory navigator..."
-install_command "zoxide" "curl -k -L \"https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-${ARCH}-${MUSL_SUFFIX}.tar.gz\" -o zoxide.tar.gz && \
-  tar -xzf zoxide.tar.gz && \
-  $SUDO cp zoxide /usr/local/bin/ && \
-  $SUDO chmod +x /usr/local/bin/zoxide" "zoxide" "" "$FORCE_INSTALL"
-
-log_progress "Installing fzf fuzzy finder..."
-install_command "fzf" "curl -k -LO \"https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${FZF_PLATFORM}.tar.gz\" && \
-  tar -xzf fzf-${FZF_VERSION}-linux_${FZF_PLATFORM}.tar.gz && \
-  $SUDO install fzf -D -t /usr/local/bin/" "fzf" "" "$FORCE_INSTALL"
-
-log_progress "Installing ripgrep search tool..."
-install_command "ripgrep" "curl -k -LO \"https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${ARCH}-${RIPGREP_SUFFIX}.tar.gz\" && \
-  tar -xzf ripgrep-${RG_VERSION}-${ARCH}-${RIPGREP_SUFFIX}.tar.gz && \
-  $SUDO install ripgrep-${RG_VERSION}-${ARCH}-${RIPGREP_SUFFIX}/rg -D -t /usr/local/bin/" "rg" "" "$FORCE_INSTALL"
-
-log_progress "Installing fd file finder..."
-install_command "fd" "curl -k -LO \"https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
-  tar -xzf fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
-  $SUDO install fd-v${FD_VERSION}-${ARCH}-${GNU_SUFFIX}/fd -D -t /usr/local/bin/" "fd" "" "$FORCE_INSTALL"
-
-log_progress "Installing lazygit Git UI..."
-install_command "lazygit" "curl -k -LO \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz\" && \
-  tar -xzf lazygit_${LAZYGIT_VERSION}_${LAZYGIT_PLATFORM}.tar.gz && \
-  $SUDO install lazygit -D -t /usr/local/bin/" "lazygit" "" "$FORCE_INSTALL"
-
-log_progress "Installing direnv environment manager..."
-install_command "direnv" "curl -k -LO \"https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.${DIRENV_PLATFORM}\" && \
-  chmod +x direnv.${DIRENV_PLATFORM} && \
-  $SUDO mv direnv.${DIRENV_PLATFORM} /usr/local/bin/direnv" "direnv" "" "$FORCE_INSTALL"
-
-log_progress "Installing eza ls replacement..."
-install_command "eza" "curl -k -LO \"https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
-  tar -xzf eza_${ARCH}-${GNU_SUFFIX}.tar.gz && \
-  $SUDO install eza -D -t /usr/local/bin/" "eza" "" "$FORCE_INSTALL"
-
-log_progress "Installing neovim editor..."
-install_command "nvim" "curl -k -LO \"https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-linux-${NVIM_PLATFORM}.tar.gz\" && \
-  tar -xzf nvim-linux-${NVIM_PLATFORM}.tar.gz && \
-  $SUDO cp -r nvim-linux-${NVIM_PLATFORM}/* /usr/local/" "nvim" "" "$FORCE_INSTALL"
-
-log_progress "Installing node.js runtime..."
-install_command "node" "curl -k -LO \"https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz\" && \
-  tar -xf node-v${NODE_VERSION}-${NODE_PLATFORM}.tar.xz && \
-  $SUDO cp -r node-v${NODE_VERSION}-${NODE_PLATFORM}/* /usr/local/" "node" "" "$FORCE_INSTALL"
-
-log_progress "Installing bat syntax highlighting pager..."
-install_command "bat" "curl -k -LO \"https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz\" && \
-  tar -xzf bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}.tar.gz && \
-  $SUDO install bat-v${BAT_VERSION}-${ARCH}-${GNU_SUFFIX}/bat -D -t /usr/local/bin/" "bat" "" "$FORCE_INSTALL"
-
-log_progress "Installing yazi file manager..."
-install_command "yazi" "curl -k -LO \"https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-${ARCH}-${MUSL_SUFFIX}.zip\" && \
-  unzip yazi-${ARCH}-${MUSL_SUFFIX}.zip && \
-  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/yazi -D -t /usr/local/bin/ && \
-  $SUDO install yazi-${ARCH}-${MUSL_SUFFIX}/ya -D -t /usr/local/bin/" "yazi" "" "$FORCE_INSTALL"
-
-log_progress "Installing tree-sitter CLI..."
-if command -v npm &> /dev/null; then
-  if [ "$FORCE_INSTALL" = true ] || ! command -v tree-sitter &> /dev/null; then
-    $SUDO npm install -g tree-sitter-cli@${TREE_SITTER_VERSION}
-    log_success "tree-sitter-cli v${TREE_SITTER_VERSION} installed successfully"
+  if command -v mise &>/dev/null; then
+    log_success "mise installed successfully"
   else
-    log_success "tree-sitter-cli is already installed (use --force to reinstall)"
+    error_exit "Failed to install mise"
   fi
 else
-  log_warning "npm not found, skipping tree-sitter-cli installation"
+  log_success "mise is already installed"
+  mise --version
 fi
 
-section_header "Installation Summary"
+# ===============================================
+# Tool Installation via Mise
+# ===============================================
+
+log_progress "Installing all tools from config/mise/config.toml..."
+
 if [ "$FORCE_INSTALL" = true ]; then
-    log_complete "All tools have been successfully reinstalled/updated!"
+  mise install --force
 else
-    log_complete "All tools have been successfully installed!"
+  mise install
 fi
-echo
-echo "Tools installed:"
-echo "  - starship  - Cross-shell prompt"
-echo "  - zoxide    - Smarter cd command"
-echo "  - fzf       - Fuzzy finder"
-echo "  - ripgrep   - Fast grep alternative"
-echo "  - fd        - Simple, fast file finder"
-echo "  - lazygit   - Git terminal UI"
-echo "  - direnv    - Environment switcher"
-echo "  - eza       - Modern ls alternative"
-echo "  - nvim      - Neovim text editor"
-echo "  - node      - JavaScript runtime"
-echo "  - bat       - Syntax highlighting pager"
-echo "  - yazi      - File manager"
-echo "  - tree-sitter - Parser generator tool (via npm)"
-echo
-if [ "$FORCE_INSTALL" = true ]; then
-    echo "All packages were reinstalled using --force mode."
-    echo
+
+log_success "All mise tools installed successfully"
+
+# ===============================================
+# Post-Install Configuration
+# ===============================================
+
+section_header "Post-Install Configuration"
+
+# Configure K9s theme
+if command -v k9s &>/dev/null; then
+  log_progress "Configuring k9s Catppuccin theme..."
+  if bash "$SCRIPT_DIR/configure_k9s.sh" 2>/dev/null; then
+    log_success "k9s theme configured"
+  else
+    log_warning "k9s theme configuration failed (non-critical)"
+  fi
 fi
-echo "Run --help for more information about each tool."
+
+# Configure Helm plugins
+if command -v helm &>/dev/null; then
+  log_progress "Installing Helm plugins..."
+  if bash "$SCRIPT_DIR/configure_helm.sh" 2>/dev/null; then
+    log_success "Helm plugins installed"
+  else
+    log_warning "Helm plugins installation failed (non-critical)"
+  fi
+fi
+
+# ===============================================
+# Verification
+# ===============================================
+
+section_header "Installation Verification"
+log_progress "Verifying tool installations..."
+
+mise doctor
+
+section_header "Installation Summary"
+log_complete "All tools have been successfully installed via mise!"
+echo
+echo "Installed tools:"
+mise list
+echo
+echo "Next steps:"
+echo "  1. Restart your shell or run: exec zsh"
+echo "  2. Verify tools work: starship --version, fzf --version, etc."
+echo
+echo "Useful commands:"
+echo "  mise list     - Show all installed tools"
+echo "  mise upgrade  - Update all tools to latest versions"
+echo "  mise doctor   - Check for issues"
