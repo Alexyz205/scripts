@@ -98,6 +98,18 @@ else
   mise --version
 fi
 
+# Add mise shims to PATH for non-interactive shells (like devcontainers)
+if [ ! -d "$HOME/.local/share/mise/shims" ]; then
+  log_progress "Creating mise shims directory..."
+  mkdir -p "$HOME/.local/share/mise/shims"
+fi
+
+# Ensure mise shims are in PATH
+if [[ ":$PATH:" != *":$HOME/.local/share/mise/shims:"* ]]; then
+  export PATH="$HOME/.local/share/mise/shims:$PATH"
+  log_progress "Added mise shims to PATH"
+fi
+
 # ===============================================
 # Tool Installation via Mise
 # ===============================================
