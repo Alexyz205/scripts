@@ -130,6 +130,46 @@ log_success "All mise tools installed successfully"
 
 section_header "Post-Install Configuration"
 
+# Install pass (password store) - not available via mise, so use the system
+# package manager when the binary is missing
+if command -v pass &>/dev/null; then
+  log_success "pass is already installed"
+else
+  log_progress "Installing pass (password store) via system package manager..."
+  check_sudo
+  case "$(uname -s)" in
+  Linux)
+    if command -v apt-get &>/dev/null; then
+      $SUDO apt-get install -y -qq pass
+    elif command -v dnf &>/dev/null; then
+      $SUDO dnf install -y pass
+    elif command -v pacman &>/dev/null; then
+      $SUDO pacman -S --noconfirm pass
+    elif command -v apk &>/dev/null; then
+      $SUDO apk add --no-cache pass
+    else
+      log_warning "Unsupported Linux package manager - install pass manually"
+    fi
+    ;;
+  Darwin)
+    if command -v brew &>/dev/null; then
+      brew install pass
+    else
+      log_warning "Homebrew not found - install pass manually"
+    fi
+    ;;
+  *)
+    log_warning "Unsupported OS - install pass manually"
+    ;;
+  esac
+
+  if command -v pass &>/dev/null; then
+    log_success "pass installed successfully"
+  else
+    log_warning "pass installation failed - install it manually and run 'pass init'"
+  fi
+fi
+
 # Configure K9s theme
 if command -v k9s &>/dev/null; then
   log_progress "Configuring k9s Catppuccin theme..."
@@ -167,7 +207,7 @@ mise list
 echo
 echo "Next steps:"
 echo "  1. Restart your shell or run: exec zsh"
-echo "  2. Verify tools work: starship --version, fzf --version, etc."
+echo "  2. Verify tools work: starship --version, neovim --version, etc."
 echo
 echo "Useful commands:"
 echo "  mise list     - Show all installed tools"

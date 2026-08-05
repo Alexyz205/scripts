@@ -139,7 +139,7 @@ Installs all development tools using **mise** as the package manager. Tool versi
 
 **Installed Tools** (see `config/mise/config.toml` for full list):
 
-- **Shell & Terminal**: starship, zoxide, fzf, tmux
+- **Shell & Terminal**: starship, zoxide, tmux
 - **File & Text**: ripgrep, fd, bat, eza, yazi
 - **Version Control**: lazygit
 - **Editors**: nvim, tree-sitter
