@@ -102,7 +102,7 @@ common_items=(
   "config/ghostty/themes:$XDG_CONFIG_HOME/ghostty/themes"
   "config/mise/config.toml:$XDG_CONFIG_HOME/mise/config.toml"
   "config/tmux/tmux:$HOME/.tmux"
-  "config/tmux/.tmux.conf:$HOME/.tmux.conf"
+  "config/tmux/tmux.conf:$HOME/.tmux.conf"
   "config/starship/starship.toml:$XDG_CONFIG_HOME/starship.toml"
   "config/lazygit/config.yml:$XDG_CONFIG_HOME/lazygit/config.yml"
   "config/lazygit/config.yml:$XDG_CONFIG_HOME/lazydocker/config.yml"
